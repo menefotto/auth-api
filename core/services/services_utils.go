@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/smtp"
@@ -16,8 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/managers"
-	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -161,22 +158,6 @@ func VerifyRequest(cookie string, crsf string) error {
 
 	return nil
 
-}
-
-func Serialize(user *models.User) []byte {
-	for field, value := range settings.OBFUSCATED_FIELDS {
-		err := managers.SetField(user, field, value)
-		if err != nil {
-			errors.Json(errors.New("Serialization: " + err.Error()))
-		}
-	}
-
-	buser, err := json.Marshal(user)
-	if err != nil {
-		return errors.Json(errors.ErrMalformedInput)
-	}
-
-	return buser
 }
 
 func SendEmail(sendto []string, body string) error {

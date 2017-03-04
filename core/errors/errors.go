@@ -9,6 +9,10 @@ var ErrLoginError = New("Something is wrong in your credentials!")
 var ErrNotValid = New("Your token autorization isn't valid!")
 var ErrWrongSigningMethod = New("Wrong signing method!")
 var ErrDontMatch = New("Your csrf token is not valid!")
+var ErrBodyNotValid = New("Request body not valid!")
+var ErrCrsfMissing = New("Crsf token is missing!")
+var ErrTokCookieMissing = New("Jwt missing from cookie!")
+var ErrInternalError = New("Internal Sever error!")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}
