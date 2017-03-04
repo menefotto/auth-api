@@ -19,14 +19,22 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
+	token := cookie.Get(w, r)
+	if token == "" {
+		http.Error(w, "Token not found request declined", http.StatusUnauthorized)
+	}
+
 	if r.Method == "post" {
 		data := ViewsModifierHelper(w, r)
 		if data != nil {
+			return
 		}
+
+		services.Me(token, "no", data)
 	}
 
 	if r.Method == "get" {
-		user, err := services.Me(nil)
+		user, err := services.Me(token, "no", nil)
 	}
 }
 

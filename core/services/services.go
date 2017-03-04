@@ -30,7 +30,7 @@ func Login(data []byte) (string, string, error) {
 	return GenerateToken([]byte(user.Uuid)), uuid, nil
 }
 
-func Logout(cookie map[string]string, crsf string) error {
+func Logout(cookie string, crsf string) error {
 	err := VerifyRequest(cookie, crsf)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func Logout(cookie map[string]string, crsf string) error {
 	return nil
 }
 
-func Me(cookie map[string]string, crsf string, data []byte) (*models.User, error) {
+func Me(cookie string, crsf string, data []byte) (*models.User, error) {
 	err := VerifyRequest(cookie, crsf)
 	if err != nil {
 		return nil, err

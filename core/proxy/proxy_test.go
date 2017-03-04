@@ -6,11 +6,12 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 )
 
 func TestApiError(t *testing.T) {
-	err := NewApiError("test error")
+	err := errors.New("test error")
 	if err.Error() != "test error" {
 		t.Fatal("error message should be equal!")
 	}

@@ -15,9 +15,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/proxy"
 	"github.com/auth-api/core/settings"
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -65,12 +65,12 @@ func Encrypt(data string) (string, error) {
 
 	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	asecipher, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	return fmt.Sprintf("%x", asecipher.Seal(nil, nonce, []byte(data), nil)), nil
@@ -82,17 +82,17 @@ func Decrypt(data string) (string, error) {
 
 	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	asecipher, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	dec, err := asecipher.Open(nil, nonce, text, nil)
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	return fmt.Sprintf("%s\n", dec), nil
@@ -102,7 +102,7 @@ func RandomGenerator(length int) (string, error) {
 
 	random := make([]byte, length)
 	if _, err := io.ReadFull(rand.Reader, random); err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	return fmt.Sprintf("%x\n", random), nil
@@ -115,32 +115,31 @@ func CheckPassword(p, p2 string) error {
 
 	err := bcrypt.CompareHashAndPassword(pass, pass2)
 	if err == bcrypt.ErrMismatchedHashAndPassword {
-		return err
+		return errors.New(err.Error())
 	}
 
 	if err == bcrypt.ErrHashTooShort {
-		return err
-
+		return errors.New(err.Error())
 	}
 
 	if err != nil {
-		return ErrLoginError
+		return errors.ErrLoginError
 	}
 
 	return nil
 }
 
-func VerifyRequest(cookie map[string]string, crsf string) error {
+func VerifyRequest(cookie string, crsf string) error {
 
 	email, err := Decrypt(crsf)
 	if err != nil {
 		return err
 	}
 
-	token, err := jwt.ParseWithClaims(cookie["token"], &customClaims{},
+	token, err := jwt.ParseWithClaims(cookie, &customClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, ErrWrongSigningMethod
+				return nil, errors.ErrWrongSigningMethod
 			}
 
 			return "", nil
@@ -148,16 +147,16 @@ func VerifyRequest(cookie map[string]string, crsf string) error {
 
 	claims, ok := token.Claims.(*customClaims)
 	if !ok && !token.Valid {
-		return ErrNotValid
+		return errors.ErrNotValid
 	}
 
 	emailCheck, err := Decrypt(claims.Custom)
 	if err != nil {
-		return err
+		return errors.New(err.Error())
 	}
 
 	if email != emailCheck {
-		return ErrDontMatch
+		return errors.ErrDontMatch
 	}
 
 	return nil
@@ -168,13 +167,13 @@ func Serialize(user *models.User) []byte {
 	for field, value := range settings.OBFUSCATED_FIELDS {
 		err := managers.SetField(user, field, value)
 		if err != nil {
-			proxy.Json(proxy.NewApiError("Serialization: " + err.Error()))
+			errors.Json(errors.New("Serialization: " + err.Error()))
 		}
 	}
 
 	buser, err := json.Marshal(user)
 	if err != nil {
-		return proxy.Json(proxy.ErrMalformedInput)
+		return errors.Json(errors.ErrMalformedInput)
 	}
 
 	return buser
@@ -197,7 +196,7 @@ func SendEmail(sendto []string, body string) error {
 	)
 
 	if err != nil {
-		return err
+		return errors.New(err.Error())
 	}
 
 	return nil

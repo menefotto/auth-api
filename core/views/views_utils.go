@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 
 func HeaderHelper(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "Application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
 
 func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
@@ -22,4 +24,10 @@ func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
 	}
 
 	return data
+}
+
+func JsonError(w http.ResponseWriter, err error, code int) {
+	HeaderHelper(w)
+	w.WriteHeader(code)
+	fmt.Fprintln(w, proxy.Json(err))
 }
