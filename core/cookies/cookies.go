@@ -2,6 +2,7 @@ package cookies
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/securecookie"
@@ -16,13 +17,12 @@ var s = securecookie.New(
 // Set cookie helper functions
 func Set(w http.ResponseWriter, token string) {
 
-	if encoded, err := s.Encode("token", value); err == nil {
+	if encoded, err := s.Encode("token", &token); err == nil {
 		cookie := &http.Cookie{
 			Name:  "id",
 			Value: encoded,
 			Path:  "/",
 		}
-
 		http.SetCookie(w, cookie)
 	}
 }
@@ -32,6 +32,7 @@ func Get(w http.ResponseWriter, r *http.Request) string {
 	if cookie, err := r.Cookie("token"); err == nil {
 		var value string
 		if err = s.Decode("id", cookie.Value, &value); err == nil {
+			fmt.Println(value, err)
 			return value
 		}
 	}

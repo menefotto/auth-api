@@ -18,7 +18,7 @@ var NONCE = "bb8ef84243d2ee95a41c6c57"
 
 var PROJECTID = "boardsandwater"
 
-var EMAIL_PASSWORD = "######"
+var EMAIL_PASSWORD = "Stovari1985"
 
 var EMAIL_SENDER = "locci.carlo.85@gmail.com"
 

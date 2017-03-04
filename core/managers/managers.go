@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/auth-api/core/google"
 	"github.com/auth-api/core/models"
 	"github.com/pborman/uuid"
@@ -32,7 +34,11 @@ func New(kind string) *Users {
 }
 
 func (u *Users) Create(user *models.User) (*models.User, error) {
-
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = string(hash)
 	user.Uuid = uuid.New()
 	user.IsActive = false
 	user.IsStaff = false

@@ -2,7 +2,6 @@ package views
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -23,7 +22,7 @@ func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, string(errors.Json(errors.ErrBodyNotValid)), http.StatusBadRequest)
+		HttpJsonError(w, errors.ErrBodyNotValid, http.StatusBadRequest)
 
 		return nil
 	}
@@ -32,9 +31,9 @@ func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
 }
 
 func HttpJsonError(w http.ResponseWriter, err error, code int) {
-	HeaderHelper(w)
 	w.WriteHeader(code)
-	fmt.Fprintln(w, errors.Json(err))
+	HeaderHelper(w)
+	w.Write(errors.Json(err))
 }
 
 func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
@@ -42,13 +41,13 @@ func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
 	token := cookies.Get(w, r)
 
 	if crsf == "" {
-		HttpJsonError(w, errors.Json(errors.ErrCrsfMissing), http.StatusNotAcceptable)
-		return
+		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusNotAcceptable)
+		return "", ""
 	}
 
 	if token == "" {
-		HttpJsonError(w, errors.Json(errors.ErrTokCookieMissing), http.StatusNotAcceptable)
-		return
+		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusNotAcceptable)
+		return "", ""
 	}
 
 	return token, crsf
