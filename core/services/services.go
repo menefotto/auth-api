@@ -101,8 +101,8 @@ func (u *Users) Registration(data []byte) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		"registration",
 		url,
+		"registration",
 	)
 	if err != nil {
 		return err
@@ -124,8 +124,8 @@ func (u *Users) Activation(data []byte) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		"activation",
 		url,
+		"activation",
 	)
 	if err != nil {
 		return err
@@ -145,8 +145,8 @@ func (u *Users) ActivationConfirmation(data []byte) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		"activation_confirmation",
 		user.FirstName,
+		"activation_confirmation",
 	)
 	if err != nil {
 		return err

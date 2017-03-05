@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"html/template"
+	"log"
 	"net/smtp"
 	"path/filepath"
 
@@ -43,6 +44,7 @@ func RenderEmail(url, templname string) ([]byte, error) {
 	buff := &bytes.Buffer{}
 
 	path := filepath.Join(settings.EMAIL_TEMPLATE_DIR, templname+".tmpl")
+	log.Println("Path: ", path)
 	tmpl := template.Must(template.ParseFiles(path))
 	err := tmpl.Execute(buff, url)
 	if err != nil {
