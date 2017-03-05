@@ -18,7 +18,7 @@ var OBFUSCATED_FIELDS = map[string]string{"Password": "default"}
 
 var JWT_LOGIN_DELTA = 3
 
-var JWT_ACTIVATION_DELTA = 3
+var JWT_ACTIVATION_DELTA = 24 * 7
 
 var HMAC_SECRET = "v97iv7m0mi98BmPoGK81S7sKt1O1UBTV"
 

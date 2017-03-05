@@ -141,7 +141,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 
 	claims, err := utils.ClaimsFromJwt(string(data))
 	if err != nil {
-		return err
+		return errors.New(err.Error())
 	}
 
 	gotUser, _, err := mng.Get([]byte(`{"email":"` + claims.Custom + `"}`))
@@ -152,9 +152,11 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	if gotUser.Code != string(data) {
 		return errors.ErrCodeNotValid
 	}
-	log.Println("alright")
-	user, err := mng.Update([]byte(`{"isactive":"true"}`))
+
+	activatemsg := `{"isactive":"true","email":"` + claims.Custom + `"}`
+	user, err := mng.Update([]byte(activatemsg))
 	if err != nil {
+		log.Println("update err:", err)
 		return err
 	}
 
@@ -164,6 +166,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 		"activation_confirmation",
 	)
 	if err != nil {
+		log.Println("email err:", err)
 		return err
 	}
 
