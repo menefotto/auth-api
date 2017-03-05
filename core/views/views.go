@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -79,6 +80,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user, err = service.Me(token, crsf, data)
+		fmt.Println("Service err: ", err)
 		if err != nil {
 			HttpJsonError(w, err, http.StatusExpectationFailed)
 			return

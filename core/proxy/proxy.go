@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
@@ -58,7 +57,7 @@ func (j *UsersJson) Update(data []byte) (*models.User, error) {
 	if !ok {
 		return nil, errors.ErrMalformedInput
 	}
-	log.Println("Mapped:", mapped)
+
 	user, err := j.mng.Update(mapped)
 	if err != nil {
 		return nil, err

@@ -70,7 +70,6 @@ func (u *Users) Me(cookie string, crsf string, data []byte) (*models.User, error
 	if data != nil {
 		user, err := mng.Update(data)
 		if err != nil {
-			log.Println("err here:", err)
 			return nil, err
 		}
 
