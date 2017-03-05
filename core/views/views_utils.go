@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -38,15 +39,22 @@ func HttpJsonError(w http.ResponseWriter, err error, code int) {
 
 func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
 	crsf := r.Header.Get("X-CRSF-TOKEN")
-	token := cookies.Get(w, r)
+	token, err := cookies.Get(w, r)
+
+	log.Println("CRSF: ", crsf)
 
 	if crsf == "" {
 		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusNotAcceptable)
 		return "", ""
 	}
 
-	if token == "" {
-		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusNotAcceptable)
+	if token == "" && errors.ErrCookieNotFound != err {
+		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
+		return "", ""
+	}
+
+	if token == "" && err != nil {
+		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
 		return "", ""
 	}
 

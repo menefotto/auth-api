@@ -1,7 +1,7 @@
 package views
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -22,16 +22,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bjson, err := json.Marshal([]byte("crsf:" + crsf))
-	if err != nil {
-		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
-		return
-	}
-
 	cookies.Set(w, token)
 
-	n, err := w.Write(bjson)
-	if err != nil || n != len(bjson) {
+	n, err := w.Write(crsf)
+	if err != nil || n != len(crsf) {
 		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
 		return
 	}
@@ -54,6 +48,16 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+
+	if crsf != "" && token == "" {
+		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusForbidden)
+		return
+	}
+
+	if crsf == "" && token != "" {
+		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusForbidden)
+		return
+	}
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +67,6 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &models.User{}
-	HeaderHelper(w)
 	var err error
 
 	if r.Method == http.MethodPut {
@@ -79,17 +82,19 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	HeaderHelper(w)
+
 	if r.Method == http.MethodGet {
 		user, err = services.Me(token, crsf, nil)
 		if err != nil {
+			log.Println("Me get view error")
 			HttpJsonError(w, err, http.StatusExpectationFailed)
 			return
 
 		}
 	}
 
-	result := Serialize(user)
-	w.Write(result)
+	w.Write(Serialize(user))
 	w.WriteHeader(http.StatusOK)
 }
 

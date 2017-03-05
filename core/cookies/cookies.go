@@ -1,14 +1,12 @@
 package cookies
 
 import (
-	"errors"
-	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/auth-api/core/errors"
 	"github.com/gorilla/securecookie"
 )
-
-var ErrCookieNotFound = errors.New("Error cookie not found")
 
 var s = securecookie.New(
 	securecookie.GenerateRandomKey(64),
@@ -28,16 +26,17 @@ func Set(w http.ResponseWriter, token string) {
 }
 
 // Get cookie currently returning empty byte instead of error --- not the right way
-func Get(w http.ResponseWriter, r *http.Request) string {
-	if cookie, err := r.Cookie("token"); err == nil {
+func Get(w http.ResponseWriter, r *http.Request) (string, error) {
+	if cookie, err := r.Cookie("id"); err == nil {
 		var value string
-		if err = s.Decode("id", cookie.Value, &value); err == nil {
-			fmt.Println(value, err)
-			return value
+		if err = s.Decode("token", cookie.Value, &value); err == nil {
+			return value, nil
+		} else {
+			log.Println(err)
 		}
 	}
 
-	return ""
+	return "", errors.ErrCookieNotFound
 }
 
 // Clear cookie delete cookies

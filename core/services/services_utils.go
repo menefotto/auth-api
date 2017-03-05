@@ -7,9 +7,12 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/smtp"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -27,10 +30,7 @@ type customClaims struct {
 }
 
 func GenerateToken(data []byte) string {
-	mapped, err := Encrypt(string(data))
-	if err != nil {
-		return ""
-	}
+	mapped := string(data)
 
 	claims := customClaims{
 		mapped,
@@ -55,6 +55,26 @@ func computeHmac() []byte {
 	h := hmac.New(sha512.New, []byte(secret))
 
 	return h.Sum(nil)
+}
+
+type CrsfToken struct {
+	Token string `json:"crsf"`
+}
+
+func GenerateCrsf(data string) ([]byte, error) {
+	payload, err := Encrypt(data)
+	if err != nil {
+		return []byte(""), nil
+	}
+
+	token := &CrsfToken{payload}
+
+	csrf, err := json.Marshal(token)
+	if err != nil {
+		return []byte(""), err
+	}
+
+	return csrf, nil
 }
 
 func Encrypt(data string) (string, error) {
@@ -126,9 +146,24 @@ func CheckPassword(p, p2 string) error {
 	return nil
 }
 
-func VerifyRequest(cookie string, crsf string) error {
+func ValueFromCrsf(crsf string) (string, error) {
+	value := &CrsfToken{}
 
-	email, err := Decrypt(crsf)
+	err := json.Unmarshal([]byte(`{"crsf":"`+crsf+`"}`), value)
+	if err != nil {
+		return "", err
+	}
+
+	email, err := Decrypt(value.Token)
+	if err != nil {
+		return "", err
+	}
+
+	return email[:len(email)-1], nil
+}
+
+func VerifyRequest(cookie string, crsf string) error {
+	email, err := ValueFromCrsf(crsf)
 	if err != nil {
 		return err
 	}
@@ -147,15 +182,11 @@ func VerifyRequest(cookie string, crsf string) error {
 		return errors.ErrNotValid
 	}
 
-	emailCheck, err := Decrypt(claims.Custom)
-	if err != nil {
-		return errors.New(err.Error())
-	}
-
-	if email != emailCheck {
+	if strings.Compare(email, claims.Custom) != 0 {
 		return errors.ErrDontMatch
 	}
 
+	log.Println("user verfied")
 	return nil
 
 }

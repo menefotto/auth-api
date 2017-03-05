@@ -49,6 +49,8 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 		return nil, err
 	}
 
+	fmt.Println("User: ", user)
+
 	return user, nil
 }
 

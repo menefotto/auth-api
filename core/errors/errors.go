@@ -13,6 +13,7 @@ var ErrBodyNotValid = New("Request body not valid!")
 var ErrCrsfMissing = New("Crsf token is missing!")
 var ErrTokCookieMissing = New("Jwt missing from cookie!")
 var ErrInternalError = New("Internal Sever error!")
+var ErrCookieNotFound = New("Error cookie not found")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

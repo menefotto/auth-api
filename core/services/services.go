@@ -7,27 +7,27 @@ import (
 
 var pool = proxy.NewPool(10)
 
-func Login(data []byte) (string, string, error) {
+func Login(data []byte) (string, []byte, error) {
 
 	mng := pool.Get()
 	defer pool.Put(mng)
 
 	user, buser, err := mng.Get(data)
 	if err != nil {
-		return "", "", err
+		return "", []byte(""), err
 	}
 
 	err = CheckPassword(user.Password, buser.Password)
 	if err != nil {
-		return "", "", err
+		return "", []byte(""), err
 	}
 
-	uuid, err := Encrypt(user.Email)
+	csrf, err := GenerateCrsf(user.Email)
 	if err != nil {
-		return "", "", nil
+		return "", []byte(""), err
 	}
 
-	return GenerateToken([]byte(user.Uuid)), uuid, nil
+	return GenerateToken([]byte(user.Email)), csrf, nil
 }
 
 func Logout(cookie string, crsf string) error {
@@ -58,12 +58,17 @@ func Me(cookie string, crsf string, data []byte) (*models.User, error) {
 		return nil, nil
 	}
 
-	_, user, err := mng.Get(data)
+	email, err := ValueFromCrsf(crsf)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	other, _, err := mng.Get([]byte(`{"email":"` + email + `"}`))
+	if err != nil {
+		return nil, err
+	}
+
+	return other, nil
 }
 
 func Registration(data []byte) error {
