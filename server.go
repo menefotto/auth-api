@@ -14,7 +14,7 @@ func main() {
 	r.HandleFunc("/login", views.Login).Methods("POST").Name("login")
 	r.HandleFunc("/logout", views.Logout).Methods("POST").Name("logout")
 
-	r.HandleFunc("/me", views.Me).Methods("PUT", "GET").Name("me")
+	r.HandleFunc("/me", views.Me).Methods("POST", "GET").Name("me")
 
 	r.HandleFunc("/register", views.Register).Methods("POST").Name("register")
 

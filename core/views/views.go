@@ -72,9 +72,9 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{}
 	var err error
 
-	if r.Method == http.MethodPut {
+	if r.Method == http.MethodPost {
 		data := ViewsModifierHelper(w, r)
-		if data != nil {
+		if data == nil {
 			return
 		}
 

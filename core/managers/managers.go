@@ -60,7 +60,7 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 
 func (u *Users) Update(fields map[string]interface{}) (*models.User, error) {
 
-	email, ok := fields["Email"].(string)
+	email, ok := fields["email"].(string)
 	if !ok {
 		return nil, ErrNotString
 	}
@@ -87,14 +87,16 @@ func (u *Users) Get(email string) (*models.User, error) {
 }
 
 func (u *Users) updateFields(mapped map[string]interface{}, old *models.User) error {
+	new := &models.User{}
+	new = old
 
 	for k, value := range mapped {
-		if err := SetField(old, k, value); err != nil {
+		if err := SetField(new, k, value); err != nil {
 			return err
 		}
 	}
 
-	if err := u.store.Put(old.Email, old); err != nil {
+	if err := u.store.Put(new.Email, new); err != nil {
 		return err
 	}
 

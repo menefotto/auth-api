@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -22,6 +23,7 @@ func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Println("Error:", err)
 		HttpJsonError(w, errors.ErrBodyNotValid, http.StatusBadRequest)
 
 		return nil

@@ -68,12 +68,13 @@ func (u *Users) Me(cookie string, crsf string, data []byte) (*models.User, error
 	defer u.pool.Put(mng)
 
 	if data != nil {
-		_, err := mng.Update(data)
+		user, err := mng.Update(data)
 		if err != nil {
+			log.Println("err here:", err)
 			return nil, err
 		}
 
-		return nil, nil
+		return user, nil
 	}
 
 	email, err := utils.ValueFromCrsf(crsf)
