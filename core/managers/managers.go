@@ -10,6 +10,7 @@ import (
 
 	"github.com/auth-api/core/google"
 	"github.com/auth-api/core/models"
+	"github.com/auth-api/core/utils"
 	"github.com/pborman/uuid"
 
 	"github.com/auth-api/core/settings"
@@ -44,6 +45,7 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	user.IsStaff = false
 	user.IsSuperUser = false
 	user.DateJoined = fmt.Sprint(time.Now().UTC())
+	user.Code = utils.GenerateToken(nil, settings.JWT_ACTIVATION_DELTA)
 
 	if err := u.store.Put(user.Email, user); err != nil {
 		return nil, err

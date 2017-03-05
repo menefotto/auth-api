@@ -10,13 +10,15 @@ import (
 	"github.com/auth-api/core/services"
 )
 
+var service = services.New(10)
+
 func Login(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
 	if data == nil {
 		return
 	}
 
-	token, crsf, err := services.Login(data)
+	token, crsf, err := service.Login(data)
 	if err != nil {
 		HttpJsonError(w, err, http.StatusForbidden)
 		return
@@ -37,7 +39,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	token, crsf := GetCookieAndCrsf(w, r)
 
 	if crsf != "" && token != "" {
-		err := services.Logout(token, crsf)
+		err := service.Logout(token, crsf)
 		if err != nil {
 			HttpJsonError(w, err, http.StatusNotAcceptable)
 			return
@@ -75,7 +77,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err = services.Me(token, crsf, data)
+		user, err = service.Me(token, crsf, data)
 		if err != nil {
 			HttpJsonError(w, err, http.StatusExpectationFailed)
 			return
@@ -85,7 +87,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	HeaderHelper(w)
 
 	if r.Method == http.MethodGet {
-		user, err = services.Me(token, crsf, nil)
+		user, err = service.Me(token, crsf, nil)
 		if err != nil {
 			log.Println("Me get view error")
 			HttpJsonError(w, err, http.StatusExpectationFailed)
@@ -101,7 +103,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 func Register(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
 	if data != nil {
-		err := services.Registration(data)
+		err := service.Registration(data)
 		if err != nil {
 			HttpJsonError(w, err, http.StatusExpectationFailed)
 		}
@@ -110,13 +112,30 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func Activate(w http.ResponseWriter, r *http.Request) {
+func Activation(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
 	if data != nil {
 	}
 
-	w.WriteHeader(http.StatusNotImplemented)
-	return
+	err := service.Activation(data)
+	if err != nil {
+		HttpJsonError(w, err, http.StatusExpectationFailed)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func ActivationConfirm(w http.ResponseWriter, r *http.Request) {
+	data := ViewsModifierHelper(w, r)
+	if data != nil {
+	}
+
+	err := service.ActivationConfirmation(data)
+	if err != nil {
+		HttpJsonError(w, err, http.StatusExpectationFailed)
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func PasswordReset(w http.ResponseWriter, r *http.Request) {

@@ -12,4 +12,5 @@ type User struct {
 	IsStaff     bool   `json:"isstaff"`
 	DateJoined  string `json:"datejoined"`
 	Uuid        string `json:"uuid"`
+	Code        string `json:"confirmationcode"`
 }

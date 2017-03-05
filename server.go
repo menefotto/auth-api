@@ -14,7 +14,8 @@ func main() {
 	r.HandleFunc("/logout", views.Logout).Methods("POST").Name("logout")
 	r.HandleFunc("/me", views.Me).Methods("PUT", "GET").Name("me")
 	r.HandleFunc("/register", views.Register).Methods("POST").Name("register")
-	r.HandleFunc("/activate", views.Activate).Methods("POST").Name("activate")
+	r.HandleFunc("/activation", views.Activation).Methods("POST").Name("activation_confirm")
+	r.HandleFunc("/activation_confirm", views.ActivationConfirm).Methods("GET").Name("activation_confirm")
 	r.HandleFunc("/password/reset", views.PasswordReset).Methods("POST").Name("password_reset")
 	r.HandleFunc("/password/reset_confirm", views.PasswordResetConfirm).Methods("POST").Name("password_reset_confirm")
 

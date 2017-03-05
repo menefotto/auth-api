@@ -1,37 +1,54 @@
 package services
 
 import (
+	"strings"
+
+	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/proxy"
+	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/utils"
 )
 
-var pool = proxy.NewPool(10)
+type Users struct {
+	pool *proxy.Pool
+}
 
-func Login(data []byte) (string, []byte, error) {
+func New(poolsize int) *Users {
+	return &Users{proxy.NewPool(poolsize)}
+}
 
-	mng := pool.Get()
-	defer pool.Put(mng)
+func (u *Users) Login(data []byte) (string, []byte, error) {
+
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
 
 	user, buser, err := mng.Get(data)
 	if err != nil {
-		return "", []byte(""), err
+		return "", nil, err
 	}
 
-	err = CheckPassword(user.Password, buser.Password)
+	err = utils.CheckPassword(
+		user.Password,
+		buser.Password,
+	)
 	if err != nil {
-		return "", []byte(""), err
+		return "", nil, err
 	}
 
-	csrf, err := GenerateCrsf(user.Email)
+	csrf, err := utils.GenerateCrsf(user.Email)
 	if err != nil {
-		return "", []byte(""), err
+		return "", nil, err
 	}
 
-	return GenerateToken([]byte(user.Email)), csrf, nil
+	return utils.GenerateToken(
+		[]byte(user.Email),
+		settings.JWT_LOGIN_DELTA,
+	), csrf, nil
 }
 
-func Logout(cookie string, crsf string) error {
-	err := VerifyRequest(cookie, crsf)
+func (u *Users) Logout(cookie string, crsf string) error {
+	err := u.verifyRequest(cookie, crsf)
 	if err != nil {
 		return err
 	}
@@ -40,14 +57,14 @@ func Logout(cookie string, crsf string) error {
 	return nil
 }
 
-func Me(cookie string, crsf string, data []byte) (*models.User, error) {
-	err := VerifyRequest(cookie, crsf)
+func (u *Users) Me(cookie string, crsf string, data []byte) (*models.User, error) {
+	err := u.verifyRequest(cookie, crsf)
 	if err != nil {
 		return nil, err
 	}
 
-	mng := pool.Get()
-	defer pool.Put(mng)
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
 
 	if data != nil {
 		_, err := mng.Update(data)
@@ -58,7 +75,7 @@ func Me(cookie string, crsf string, data []byte) (*models.User, error) {
 		return nil, nil
 	}
 
-	email, err := ValueFromCrsf(crsf)
+	email, err := utils.ValueFromCrsf(crsf)
 	if err != nil {
 		return nil, err
 	}
@@ -71,16 +88,22 @@ func Me(cookie string, crsf string, data []byte) (*models.User, error) {
 	return other, nil
 }
 
-func Registration(data []byte) error {
-	mng := pool.Get()
-	defer pool.Put(mng)
+func (u *Users) Registration(data []byte) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
 
 	user, err := mng.Create(data)
 	if err != nil {
 		return err
 	}
 
-	err = SendEmail([]string{user.Email}, "default text")
+	url := GenActivationUrl(user)
+
+	err = utils.SendEmail(
+		[]string{user.Email},
+		"registration",
+		url,
+	)
 	if err != nil {
 		return err
 	}
@@ -88,16 +111,43 @@ func Registration(data []byte) error {
 	return nil
 }
 
-func Activate(data []byte) error {
-	mng := pool.Get()
-	defer pool.Put(mng)
+func (u *Users) Activation(data []byte) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
+
+	user, _, err := mng.Get(data)
+	if err != nil {
+		return err
+	}
+
+	url := GenActivationUrl(user)
+
+	err = utils.SendEmail(
+		[]string{user.Email},
+		"activation",
+		url,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Users) ActivationConfirmation(data []byte) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
 
 	user, err := mng.Update(data)
 	if err != nil {
 		return err
 	}
 
-	err = SendEmail([]string{user.Email}, "default text")
+	err = utils.SendEmail(
+		[]string{user.Email},
+		"activation_confirmation",
+		user.FirstName,
+	)
 	if err != nil {
 		return err
 	}
@@ -105,8 +155,8 @@ func Activate(data []byte) error {
 	return nil
 }
 
-func PasswordReset(data []byte) error {
-	err := GetUserAndEmail(data)
+func (u *Users) PasswordReset(data []byte) error {
+	err := u.getUserAndEmail(data, "")
 	if err != nil {
 		return err
 	}
@@ -114,10 +164,49 @@ func PasswordReset(data []byte) error {
 	return nil
 }
 
-func PasswordResetConfirm(data []byte) error {
-	err := GetUserAndEmail(data)
+func (u *Users) PasswordResetConfirm(data []byte) error {
+	err := u.getUserAndEmail(data, "")
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (u *Users) getUserAndEmail(data []byte, tmplname string) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
+
+	user, err := mng.Create(data)
+	if err != nil {
+		return err
+	}
+
+	err = utils.SendEmail(
+		[]string{user.Email},
+		"default text",
+		"",
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Users) verifyRequest(cookie string, crsf string) error {
+	email, err := utils.ValueFromCrsf(crsf)
+	if err != nil {
+		return err
+	}
+
+	claims, err := utils.ClaimsFromJwt(cookie)
+	if err != nil {
+		return err
+	}
+
+	if strings.Compare(email, claims.Custom) != 0 {
+		return errors.ErrDontMatch
 	}
 
 	return nil
