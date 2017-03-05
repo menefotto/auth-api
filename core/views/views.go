@@ -8,6 +8,7 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/services"
+	"github.com/gorilla/mux"
 )
 
 var service = services.New(10)
@@ -89,7 +90,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		user, err = service.Me(token, crsf, nil)
 		if err != nil {
-			log.Println("Me get view error")
+			log.Println("err: ", err)
 			HttpJsonError(w, err, http.StatusExpectationFailed)
 			return
 
@@ -116,21 +117,19 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
 	if data != nil {
 	}
-
 	err := service.Activation(data)
 	if err != nil {
 		HttpJsonError(w, err, http.StatusExpectationFailed)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
 func ActivationConfirm(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data != nil {
-	}
+	vars := mux.Vars(r)
 
-	err := service.ActivationConfirmation(data)
+	err := service.ActivationConfirm([]byte(vars["tok"]))
 	if err != nil {
 		HttpJsonError(w, err, http.StatusExpectationFailed)
 	}

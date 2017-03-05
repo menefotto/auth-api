@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/auth-api/core/errors"
@@ -35,10 +36,9 @@ func GenerateToken(data []byte, delta int) string {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenString, err := token.SignedString(computeHmac())
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	tokenString, err := token.SignedString(GetPrivateKey())
 	if err != nil {
-		fmt.Println(err)
 		return ""
 	}
 
@@ -49,13 +49,14 @@ func ClaimsFromJwt(tok string) (*customClaims, error) {
 
 	token, err := jwt.ParseWithClaims(tok, &customClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 				return nil, errors.ErrWrongSigningMethod
 			}
-
-			return "", nil
+			// bolocks implementation http://stackoverflow.com/questions/28204385/using-jwt-go-library-key-is-invalid-or-invalid-type
+			return GetPubblicKey(), nil
 		})
 	if err != nil {
+		log.Println("claims from jwt")
 		return nil, err
 	}
 

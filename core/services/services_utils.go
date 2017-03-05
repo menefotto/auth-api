@@ -6,6 +6,5 @@ import (
 )
 
 func GenActivationUrl(user *models.User) string {
-
-	return settings.API_URL + "activation" + "/" + user.Code
+	return settings.API_URL + "activation_confirm/" + user.Code
 }

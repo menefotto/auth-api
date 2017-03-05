@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"errors"
 	"html/template"
-	"log"
 	"net/smtp"
 	"path/filepath"
 
 	"github.com/auth-api/core/settings"
 )
 
-func SendEmail(sendto []string, url, templname string) error {
+type Email struct {
+	Title   string
+	Message string
+}
+
+func SendEmail(sendto []string, msg *Email, templname string) error {
 	auth := smtp.PlainAuth(
 		"",
 		settings.EMAIL_SENDER,
@@ -19,7 +23,7 @@ func SendEmail(sendto []string, url, templname string) error {
 		settings.EMAIL_SMTP,
 	)
 
-	body, err := RenderEmail(url, templname)
+	body, err := RenderEmail(msg, templname)
 	if err != nil {
 		return err
 	}
@@ -40,13 +44,12 @@ func SendEmail(sendto []string, url, templname string) error {
 
 }
 
-func RenderEmail(url, templname string) ([]byte, error) {
+func RenderEmail(msg *Email, templname string) ([]byte, error) {
 	buff := &bytes.Buffer{}
 
 	path := filepath.Join(settings.EMAIL_TEMPLATE_DIR, templname+".tmpl")
-	log.Println("Path: ", path)
 	tmpl := template.Must(template.ParseFiles(path))
-	err := tmpl.Execute(buff, url)
+	err := tmpl.Execute(buff, msg)
 	if err != nil {
 		return nil, err
 	}

@@ -39,19 +39,21 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	user.Password = string(hash)
 	user.Uuid = uuid.New()
 	user.IsActive = false
 	user.IsStaff = false
 	user.IsSuperUser = false
 	user.DateJoined = fmt.Sprint(time.Now().UTC())
-	user.Code = utils.GenerateToken(nil, settings.JWT_ACTIVATION_DELTA)
+	user.Code = utils.GenerateToken(
+		[]byte(user.Email),
+		settings.JWT_ACTIVATION_DELTA,
+	)
 
 	if err := u.store.Put(user.Email, user); err != nil {
 		return nil, err
 	}
-
-	fmt.Println("User: ", user)
 
 	return user, nil
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"log"
 	"strings"
 
 	"github.com/auth-api/core/errors"
@@ -101,7 +102,7 @@ func (u *Users) Registration(data []byte) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		url,
+		&utils.Email{"Registration", url},
 		"registration",
 	)
 	if err != nil {
@@ -124,7 +125,7 @@ func (u *Users) Activation(data []byte) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		url,
+		&utils.Email{"Activation", url},
 		"activation",
 	)
 	if err != nil {
@@ -134,18 +135,32 @@ func (u *Users) Activation(data []byte) error {
 	return nil
 }
 
-func (u *Users) ActivationConfirmation(data []byte) error {
+func (u *Users) ActivationConfirm(data []byte) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, err := mng.Update(data)
+	claims, err := utils.ClaimsFromJwt(string(data))
+	if err != nil {
+		return err
+	}
+
+	gotUser, _, err := mng.Get([]byte(`{"email":"` + claims.Custom + `"}`))
+	if err != nil {
+		return err
+	}
+
+	if gotUser.Code != string(data) {
+		return errors.ErrCodeNotValid
+	}
+	log.Println("alright")
+	user, err := mng.Update([]byte(`{"isactive":"true"}`))
 	if err != nil {
 		return err
 	}
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		user.FirstName,
+		&utils.Email{"Activation Confirmed", ""},
 		"activation_confirmation",
 	)
 	if err != nil {
@@ -184,7 +199,7 @@ func (u *Users) getUserAndEmail(data []byte, tmplname string) error {
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		"default text",
+		&utils.Email{},
 		"",
 	)
 	if err != nil {
@@ -197,14 +212,13 @@ func (u *Users) getUserAndEmail(data []byte, tmplname string) error {
 func (u *Users) verifyRequest(cookie string, crsf string) error {
 	email, err := utils.ValueFromCrsf(crsf)
 	if err != nil {
+		//log.Println("here")
 		return err
 	}
-
 	claims, err := utils.ClaimsFromJwt(cookie)
 	if err != nil {
 		return err
 	}
-
 	if strings.Compare(email, claims.Custom) != 0 {
 		return errors.ErrDontMatch
 	}
