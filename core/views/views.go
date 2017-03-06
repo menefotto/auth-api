@@ -159,8 +159,7 @@ func PasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNotImplemented)
-	return
+	w.WriteHeader(http.StatusOK)
 }
 
 func PasswordResetConfirm(w http.ResponseWriter, r *http.Request) {
