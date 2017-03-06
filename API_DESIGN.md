@@ -23,6 +23,12 @@
       will be sent with an activation link, once confirmed the account will be active
       and another final confimation email will be sent
 
+- activeted/confirm/[\w]+
+    supports POST
+      once the user is created is created with is_active defaulted to false, and email
+      will be sent with an activation link, once confirmed the account will be active
+      and another final confimation email will be sent
+
 - password/reset
     support POST
       given the email address an email will be sent redirecting the user to password change

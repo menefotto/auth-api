@@ -163,7 +163,12 @@ func PasswordReset(w http.ResponseWriter, r *http.Request) {
 }
 
 func PasswordResetConfirm(w http.ResponseWriter, r *http.Request) {
+	err := service.PasswordResetConfirm([]byte(mux.Vars(r)["tok"]))
+	if err != nil {
+		EmailErrorCheck(w, err)
+		return
+	}
 
-	w.WriteHeader(http.StatusNotImplemented)
+	w.WriteHeader(http.StatusOK)
 	return
 }

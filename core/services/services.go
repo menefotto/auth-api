@@ -121,7 +121,12 @@ func (u *Users) Register(data []byte) error {
 }
 
 func (u *Users) Activation(data []byte) error {
-	err := u.getUserSendEmail(data, "activation", "activation_confirm", "")
+	err := u.sendConfirmEmail(
+		data,
+		"Activation Link",
+		"activation",
+		"activation_confirm", "",
+	)
 	if err != nil {
 		return err
 	}
@@ -168,13 +173,26 @@ func (u *Users) ActivationConfirm(data []byte) error {
 func (u *Users) PasswordReset(data []byte) error {
 
 	code := utils.GenerateJwt(nil, settings.JWT_PASSWORD_DELTA)
+
 	u.cache.Put(code, data)
-	err := u.getUserSendEmail(data, "password reset", "password_reset", code)
+
+	err := u.sendConfirmEmail(
+		data,
+		"Password Reset Link",
+		"password_reset",
+		"password/reset/confirm",
+		code,
+	)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+type passwordReset struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (u *Users) PasswordResetConfirm(data []byte) error {
@@ -188,51 +206,41 @@ func (u *Users) PasswordResetConfirm(data []byte) error {
 		return errors.ErrNotValid
 	}
 
-	var content interface{}
-	err := json.Unmarshal(code, &content)
+	content := &passwordReset{}
+	err := json.Unmarshal(code, content)
 	if err != nil {
 		return errors.ErrJsonPayload
 	}
 
-	mapp, ok := content.(map[string]string)
-	if !ok {
+	pass, err := bcrypt.GenerateFromPassword(
+		[]byte(content.Password), bcrypt.MinCost,
+	)
+	if err != nil {
 		return errors.ErrInternalError
 	}
 
-	for key, value := range mapp {
-		if key == "password" {
-			pass, err := bcrypt.GenerateFromPassword(
-				[]byte(value), bcrypt.MinCost,
-			)
-			if err != nil {
-				return errors.ErrInternalError
-			}
-			mng := u.pool.Get()
-			defer u.pool.Put(mng)
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
 
-			msg := `{"` + mapp["email"] + `":"` + string(pass) + `"}`
+	msg := `{"email":"` + content.Email + `","password":"` + string(pass) + `"}`
 
-			user, err := mng.Update(msg)
-			if err != nil {
-				return err
-			}
-
-			err = utils.SendEmail(
-				[]string{user.Email},
-				&utils.Email{"password reset confirmed", ""},
-				"password_reset_confirm",
-			)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
+	user, err := mng.Update([]byte(msg))
+	if err != nil {
+		return err
 	}
 
-	return errors.ErrFailedPassUpdate
+	err = utils.SendEmail(
+		[]string{user.Email},
+		&utils.Email{"password reset confirmed", ""},
+		"password_reset_confirmation",
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (u *Users) getUserSendEmail(data []byte, title, tmplname, code string) error {
+func (u *Users) sendConfirmEmail(data []byte, title, tmplname, purl, code string) error {
 	var url string
 
 	mng := u.pool.Get()
@@ -244,9 +252,9 @@ func (u *Users) getUserSendEmail(data []byte, title, tmplname, code string) erro
 	}
 
 	if code != "" {
-		url = GenConfirmationUrl(user, tmplname, code)
+		url = GenConfirmationUrl(user, purl, code)
 	} else {
-		url = GenConfirmationUrl(user, tmplname, user.Code)
+		url = GenConfirmationUrl(user, purl, user.Code)
 	}
 
 	err = utils.SendEmail(
@@ -261,47 +269,9 @@ func (u *Users) getUserSendEmail(data []byte, title, tmplname, code string) erro
 	return nil
 }
 
-func (u *Users) getUserConfirmChange(data []byte, title, tmplname string, update []byte) error {
-	mng := u.pool.Get()
-	defer u.pool.Put(mng)
-
-	claims, err := utils.ClaimsFromJwt(string(data))
-	if err != nil {
-		return errors.New(err.Error())
-	}
-
-	gotUser, _, err := mng.Get([]byte(`{"email":"` + claims.Custom + `"}`))
-	if err != nil {
-		return err
-	}
-
-	if gotUser.Code != string(data) {
-		return errors.ErrCodeNotValid
-	}
-
-	active := []byte(`{"isactive":"true","email":"` + claims.Custom + `"}`)
-	user, err := mng.Update(active)
-	if err != nil {
-		return err
-	}
-
-	err = utils.SendEmail(
-		[]string{user.Email},
-		&utils.Email{title, ""},
-		tmplname,
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
 func (u *Users) verifyRequest(cookie string, crsf string) error {
 	email, err := utils.ValueFromCrsf(crsf)
 	if err != nil {
-		//log.Println("here")
 		return err
 	}
 	claims, err := utils.ClaimsFromJwt(cookie)
