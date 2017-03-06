@@ -75,3 +75,24 @@ func Serialize(user *models.User) []byte {
 
 	return buser
 }
+
+func MeErrorCheck(w http.ResponseWriter, err error) {
+	switch {
+	case err == errors.ErrDontMatch:
+		HttpJsonError(w, err, http.StatusUnauthorized)
+	case err == errors.ErrUserNotFound:
+		HttpJsonError(w, err, http.StatusBadRequest)
+	default:
+		HttpJsonError(w, err, http.StatusInternalServerError)
+	}
+}
+
+func EmailErrorCheck(w http.ResponseWriter, err error) {
+	switch {
+	case err == errors.ErrUserNotFound:
+		HttpJsonError(w, err, http.StatusBadRequest)
+	default:
+		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
+	}
+
+}

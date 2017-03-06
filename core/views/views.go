@@ -1,8 +1,6 @@
 package views
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -43,7 +41,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	if crsf != "" && token != "" {
 		err := service.Logout(token, crsf)
 		if err != nil {
-			HttpJsonError(w, err, http.StatusNotAcceptable)
+			HttpJsonError(w, err, http.StatusUnauthorized)
 			return
 		}
 
@@ -54,12 +52,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if crsf != "" && token == "" {
-		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusForbidden)
+		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusUnauthorized)
 		return
 	}
 
 	if crsf == "" && token != "" {
-		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusForbidden)
+		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusUnauthorized)
 		return
 	}
 }
@@ -80,9 +78,8 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user, err = service.Me(token, crsf, data)
-		fmt.Println("Service err: ", err)
 		if err != nil {
-			HttpJsonError(w, err, http.StatusExpectationFailed)
+			MeErrorCheck(w, err)
 			return
 		}
 	}
@@ -92,8 +89,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		user, err = service.Me(token, crsf, nil)
 		if err != nil {
-			log.Println("err: ", err)
-			HttpJsonError(w, err, http.StatusExpectationFailed)
+			MeErrorCheck(w, err)
 			return
 
 		}
@@ -105,10 +101,22 @@ func Me(w http.ResponseWriter, r *http.Request) {
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
+	if data == nil {
+		return
+	}
+
 	if data != nil {
-		err := service.Registration(data)
+		err := service.Register(data)
 		if err != nil {
-			HttpJsonError(w, err, http.StatusExpectationFailed)
+			switch {
+			case err == errors.ErrInternalDb:
+				HttpJsonError(w, err, http.StatusBadRequest)
+			case err == errors.ErrMalformedInput:
+				HttpJsonError(w, err, http.StatusBadRequest)
+			default:
+				HttpJsonError(w, err, http.StatusInternalServerError)
+			}
+			return
 		}
 	}
 
@@ -117,11 +125,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 func Activation(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
-	if data != nil {
+	if data == nil {
+		return
 	}
+
 	err := service.Activation(data)
 	if err != nil {
-		HttpJsonError(w, err, http.StatusExpectationFailed)
+		EmailErrorCheck(w, err)
 		return
 	}
 
@@ -129,9 +139,7 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 }
 
 func ActivationConfirm(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	err := service.ActivationConfirm([]byte(vars["tok"]))
+	err := service.ActivationConfirm([]byte(mux.Vars(r)["tok"]))
 	if err != nil {
 		HttpJsonError(w, err, http.StatusExpectationFailed)
 	}
@@ -141,7 +149,14 @@ func ActivationConfirm(w http.ResponseWriter, r *http.Request) {
 
 func PasswordReset(w http.ResponseWriter, r *http.Request) {
 	data := ViewsModifierHelper(w, r)
-	if data != nil {
+	if data == nil {
+		return
+	}
+
+	err := service.PasswordReset(data)
+	if err != nil {
+		EmailErrorCheck(w, err)
+		return
 	}
 
 	w.WriteHeader(http.StatusNotImplemented)
@@ -149,9 +164,6 @@ func PasswordReset(w http.ResponseWriter, r *http.Request) {
 }
 
 func PasswordResetConfirm(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data != nil {
-	}
 
 	w.WriteHeader(http.StatusNotImplemented)
 	return

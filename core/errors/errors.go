@@ -2,7 +2,6 @@ package errors
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 var ErrMalformedInput = New("Malformed data!")
@@ -18,8 +17,9 @@ var ErrTokCookieMissing = New("Jwt missing from cookie!")
 var ErrInternalError = New("Internal Sever error!")
 var ErrCookieNotFound = New("Error cookie not found")
 var ErrCodeNotValid = New("Confirmation code don't match!")
-var ErrNotBool = errors.New("Not a bool value")
-var ErrNotString = errors.New("Not a string value")
+var ErrNotBool = New("Not a bool value")
+var ErrNotString = New("Not a string value")
+var ErrJsonPayload = New("Json payload is missing from request")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

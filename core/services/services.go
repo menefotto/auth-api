@@ -89,7 +89,7 @@ func (u *Users) Me(cookie string, crsf string, data []byte) (*models.User, error
 	return other, nil
 }
 
-func (u *Users) Registration(data []byte) error {
+func (u *Users) Register(data []byte) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
@@ -98,7 +98,7 @@ func (u *Users) Registration(data []byte) error {
 		return err
 	}
 
-	url := GenActivationUrl(user)
+	url := GenConfirmationUrl(user, "registration")
 
 	err = utils.SendEmail(
 		[]string{user.Email},
@@ -113,21 +113,7 @@ func (u *Users) Registration(data []byte) error {
 }
 
 func (u *Users) Activation(data []byte) error {
-	mng := u.pool.Get()
-	defer u.pool.Put(mng)
-
-	user, _, err := mng.Get(data)
-	if err != nil {
-		return err
-	}
-
-	url := GenActivationUrl(user)
-
-	err = utils.SendEmail(
-		[]string{user.Email},
-		&utils.Email{"Activation", url},
-		"activation",
-	)
+	err := u.getUserSendEmail(data, "activation", "activation_confirm")
 	if err != nil {
 		return err
 	}
@@ -156,7 +142,6 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	activatemsg := `{"isactive":"true","email":"` + claims.Custom + `"}`
 	user, err := mng.Update([]byte(activatemsg))
 	if err != nil {
-		log.Println("update err:", err)
 		return err
 	}
 
@@ -174,7 +159,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 }
 
 func (u *Users) PasswordReset(data []byte) error {
-	err := u.getUserAndEmail(data, "")
+	err := u.getUserSendEmail(data, "password reset", "password_reset")
 	if err != nil {
 		return err
 	}
@@ -183,7 +168,26 @@ func (u *Users) PasswordReset(data []byte) error {
 }
 
 func (u *Users) PasswordResetConfirm(data []byte) error {
-	err := u.getUserAndEmail(data, "")
+
+	return nil
+}
+
+func (u *Users) getUserSendEmail(data []byte, title, tmplname string) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
+
+	user, _, err := mng.Get(data)
+	if err != nil {
+		return err
+	}
+
+	url := GenConfirmationUrl(user, tmplname)
+
+	err = utils.SendEmail(
+		[]string{user.Email},
+		&utils.Email{title, url},
+		tmplname,
+	)
 	if err != nil {
 		return err
 	}
@@ -191,25 +195,41 @@ func (u *Users) PasswordResetConfirm(data []byte) error {
 	return nil
 }
 
-func (u *Users) getUserAndEmail(data []byte, tmplname string) error {
+func (u *Users) getUserConfirmChange(data []byte, title, tmplname string, update []byte) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, err := mng.Create(data)
+	claims, err := utils.ClaimsFromJwt(string(data))
+	if err != nil {
+		return errors.New(err.Error())
+	}
+
+	gotUser, _, err := mng.Get([]byte(`{"email":"` + claims.Custom + `"}`))
+	if err != nil {
+		return err
+	}
+
+	if gotUser.Code != string(data) {
+		return errors.ErrCodeNotValid
+	}
+
+	active := []byte(`{"isactive":"true","email":"` + claims.Custom + `"}`)
+	user, err := mng.Update(active)
 	if err != nil {
 		return err
 	}
 
 	err = utils.SendEmail(
 		[]string{user.Email},
-		&utils.Email{},
-		"",
+		&utils.Email{title, ""},
+		tmplname,
 	)
 	if err != nil {
 		return err
 	}
 
 	return nil
+
 }
 
 func (u *Users) verifyRequest(cookie string, crsf string) error {
