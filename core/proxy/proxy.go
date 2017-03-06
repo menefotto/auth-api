@@ -3,6 +3,7 @@ package proxy
 import (
 	"encoding/json"
 
+	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
@@ -24,7 +25,7 @@ func (j *UsersJson) Create(data []byte) (*models.User, error) {
 
 	newuser, err := j.mng.Create(user)
 	if err != nil {
-		return nil, ErrInternalDb
+		return nil, errors.ErrInternalDb
 	}
 
 	return newuser, nil
@@ -38,7 +39,7 @@ func (j *UsersJson) Get(data []byte) (*models.User, *models.User, error) {
 
 	gotUser, err := j.mng.Get(user.Email)
 	if err != nil {
-		return nil, nil, ErrUserNotFound
+		return nil, nil, errors.ErrUserNotFound
 	}
 
 	return gotUser, user, nil
@@ -49,12 +50,12 @@ func (j *UsersJson) Update(data []byte) (*models.User, error) {
 
 	err := json.Unmarshal(data, &objects)
 	if err != nil {
-		return nil, ErrMalformedInput
+		return nil, errors.ErrMalformedInput
 	}
 
 	mapped, ok := objects.(map[string]interface{})
 	if !ok {
-		return nil, ErrMalformedInput
+		return nil, errors.ErrMalformedInput
 	}
 
 	user, err := j.mng.Update(mapped)
@@ -70,7 +71,7 @@ func (j *UsersJson) Build(data []byte, t string) (*models.User, error) {
 
 	err := json.Unmarshal(data, user)
 	if err != nil {
-		return nil, ErrMalformedInput
+		return nil, errors.ErrMalformedInput
 	}
 
 	switch {
@@ -83,7 +84,7 @@ func (j *UsersJson) Build(data []byte, t string) (*models.User, error) {
 	}
 
 	if err != nil {
-		return nil, NewApiError(err.Error())
+		return nil, errors.New(err.Error())
 	}
 
 	return user, nil

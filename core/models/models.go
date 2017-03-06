@@ -2,14 +2,15 @@ package models
 
 type User struct {
 	Username    string `json:"username"`
-	FirstName   string `json:"firstname"`
-	LastName    string `json:"lastname"`
+	Firstname   string `json:"firstname"`
+	Lastname    string `json:"lastname"`
 	Password    string `json:"password"`
 	Email       string `json:"email"`
-	PhotoUrl    string `json:"photourl"`
-	IsActive    bool   `json:"isactive"`
-	IsSuperUser bool   `json:"issuperuser"`
-	IsStaff     bool   `json:"isstaff"`
-	DateJoined  string `json:"datejoined"`
+	Photourl    string `json:"photourl"`
+	Isactive    bool   `json:"isactive"`
+	Issuperuser bool   `json:"issuperuser"`
+	Isstaff     bool   `json:"isstaff"`
+	Datejoined  string `json:"datejoined"`
 	Uuid        string `json:"uuid"`
+	Code        string `json:"confirmationcode"`
 }
