@@ -20,6 +20,7 @@ var ErrCodeNotValid = New("Confirmation code don't match!")
 var ErrNotBool = New("Not a bool value")
 var ErrNotString = New("Not a string value")
 var ErrJsonPayload = New("Json payload is missing from request")
+var ErrFailedPassUpdate = New("Failed to update password")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

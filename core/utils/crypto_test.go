@@ -7,7 +7,7 @@ import (
 )
 
 func TestCreateToken(t *testing.T) {
-	token := GenerateToken([]byte("carlolocci"))
+	token := GenerateJwt([]byte("carlolocci"), 3)
 	t.Log("Token", token)
 }
 

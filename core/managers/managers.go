@@ -45,7 +45,7 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	user.Isstaff = false
 	user.Issuperuser = false
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
-	user.Code = utils.GenerateToken(
+	user.Code = utils.GenerateJwt(
 		[]byte(user.Email),
 		settings.JWT_ACTIVATION_DELTA,
 	)

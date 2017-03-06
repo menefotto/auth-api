@@ -24,7 +24,7 @@ type customClaims struct {
 	jwt.StandardClaims
 }
 
-func GenerateToken(data []byte, delta int) string {
+func GenerateJwt(data []byte, delta int) string {
 	mapped := string(data)
 
 	claims := customClaims{

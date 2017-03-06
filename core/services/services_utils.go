@@ -5,6 +5,6 @@ import (
 	"github.com/auth-api/core/settings"
 )
 
-func GenConfirmationUrl(user *models.User, part string) string {
-	return settings.API_URL + part + "/" + user.Code
+func GenConfirmationUrl(user *models.User, part, code string) string {
+	return settings.API_URL + part + "/" + code
 }
