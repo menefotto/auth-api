@@ -23,7 +23,7 @@ func SendEmail(sendto []string, msg *Email, templname string) error {
 		settings.EMAIL_SMTP,
 	)
 
-	body, err := RenderEmail(msg, templname)
+	body, err := RenderEmail(msg, templname, settings.EMAIL_SENDER, sendto)
 	if err != nil {
 		return err
 	}
@@ -44,15 +44,20 @@ func SendEmail(sendto []string, msg *Email, templname string) error {
 
 }
 
-func RenderEmail(msg *Email, templname string) ([]byte, error) {
-	buff := &bytes.Buffer{}
+func RenderEmail(msg *Email, templname, from string, sendto []string) ([]byte, error) {
+	send := "From: " + from + "\r\n"
+	recv := "To: " + sendto[0] + "\r\n"
+	mime := "MIME-version: 1.0\r\nContent-Type: text/html\r\n"
+	subj := "Subject: " + settings.PROJECTID + ": " + templname + "\r\n\r\n"
 
 	path := filepath.Join(settings.EMAIL_TEMPLATE_DIR, templname+".tmpl")
 	tmpl := template.Must(template.ParseFiles(path))
+
+	buff := &bytes.Buffer{}
 	err := tmpl.Execute(buff, msg)
 	if err != nil {
 		return nil, err
 	}
 
-	return buff.Bytes(), nil
+	return []byte(send + recv + mime + subj + buff.String() + "\r\n"), nil
 }
