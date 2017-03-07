@@ -48,7 +48,7 @@ func RenderEmail(msg *Email, templname, from string, sendto []string) ([]byte, e
 	send := "From: " + from + "\r\n"
 	recv := "To: " + sendto[0] + "\r\n"
 	mime := "MIME-version: 1.0\r\nContent-Type: text/html\r\n"
-	subj := "Subject: " + settings.PROJECTID + ": " + templname + "\r\n\r\n"
+	subj := "Subject: " + settings.PROJECTID + ": " + msg.Title + "\r\n\r\n"
 
 	path := filepath.Join(settings.EMAIL_TEMPLATE_DIR, templname+".tmpl")
 	tmpl := template.Must(template.ParseFiles(path))

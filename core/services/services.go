@@ -96,12 +96,11 @@ func (u *Users) Register(data *models.User) error {
 		return err
 	}
 
-	url := GenConfirmationUrl(user, "registration", "")
-
-	err = utils.SendEmail(
-		[]string{user.Email},
-		&utils.Email{"Registration", url},
+	err = u.sendConfirmEmail(
+		user.Email,
+		"Registration Link",
 		"registration",
+		"activation/confirm", "",
 	)
 	if err != nil {
 		return err
@@ -114,8 +113,8 @@ func (u *Users) Activation(data *models.User) error {
 	err := u.sendConfirmEmail(
 		data.Email,
 		"Activation Link",
-		"activation",
-		"activation_confirm", "",
+		"activation_confirm",
+		"activation/confirm", "",
 	)
 	if err != nil {
 		return err
@@ -151,7 +150,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	err = utils.SendEmail(
 		[]string{user.Email},
 		&utils.Email{"Activation Confirmed", ""},
-		"activation_confirmation",
+		"activation_confirm",
 	)
 	if err != nil {
 		return err
@@ -222,7 +221,7 @@ func (u *Users) PasswordResetConfirm(data []byte) error {
 	err = utils.SendEmail(
 		[]string{user.Email},
 		&utils.Email{"password reset confirmed", ""},
-		"password_reset_confirmation",
+		"password_reset_confirm",
 	)
 	if err != nil {
 		return err
