@@ -50,7 +50,7 @@ func ClaimsFromJwt(tok string) (*customClaims, error) {
 	token, err := jwt.ParseWithClaims(tok, &customClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, errors.ErrWrongSigningMethod
+				return nil, errors.WrongSigningMethod
 			}
 			// bolocks implementation http://stackoverflow.com/questions/28204385/using-jwt-go-library-key-is-invalid-or-invalid-type
 			return GetPubblicKey(), nil
@@ -62,7 +62,7 @@ func ClaimsFromJwt(tok string) (*customClaims, error) {
 
 	claims, ok := token.Claims.(*customClaims)
 	if !ok && !token.Valid {
-		return nil, errors.ErrNotValid
+		return nil, errors.NotValid
 	}
 
 	return claims, nil
@@ -99,12 +99,12 @@ func Encrypt(data string) (string, error) {
 
 	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
 	if err != nil {
-		return "", errors.New(err.Error())
+		return "", errors.NewCipher
 	}
 
 	asecipher, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", errors.New(err.Error())
+		return "", errors.NewGCM
 	}
 
 	return fmt.Sprintf("%x", asecipher.Seal(nil, nonce, []byte(data), nil)), nil
@@ -116,12 +116,12 @@ func Decrypt(data string) (string, error) {
 
 	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
 	if err != nil {
-		return "", errors.New(err.Error())
+		return "", errors.NewCipher
 	}
 
 	asecipher, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", errors.New(err.Error())
+		return "", errors.NewCipher
 	}
 
 	dec, err := asecipher.Open(nil, nonce, text, nil)
@@ -157,7 +157,7 @@ func CheckPassword(p, p2 string) error {
 	}
 
 	if err != nil {
-		return errors.ErrLoginError
+		return errors.LoginError
 	}
 
 	return nil

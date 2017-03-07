@@ -11,20 +11,16 @@ import (
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/utils"
 )
 
-func HeaderHelper(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "Application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-}
-
-func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
-	HeaderHelper(w)
+func GetRequestData(w http.ResponseWriter, r *http.Request) []byte {
+	utils.HttpHeaderHelper(w)
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println("Error:", err)
-		HttpJsonError(w, errors.ErrBodyNotValid, http.StatusBadRequest)
+		errors.Http(w, errors.BodyNotValid, http.StatusBadRequest)
 
 		return nil
 	}
@@ -32,28 +28,16 @@ func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
 	return data
 }
 
-func HttpJsonError(w http.ResponseWriter, err error, code int) {
-	w.WriteHeader(code)
-	HeaderHelper(w)
-	w.Write(errors.Json(err))
-}
-
 func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
 	crsf := r.Header.Get("X-CRSF-TOKEN")
-	token, err := cookies.Get(w, r)
-
 	if crsf == "" {
-		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusNotAcceptable)
+		errors.Http(w, errors.CrsfMissing, http.StatusUnauthorized)
 		return "", ""
 	}
 
-	if token == "" && errors.ErrCookieNotFound != err {
-		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
-		return "", ""
-	}
-
-	if token == "" && err != nil {
-		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
+	token, err := cookies.Get(w, r)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
 		return "", ""
 	}
 
@@ -70,7 +54,7 @@ func Serialize(user *models.User) []byte {
 
 	buser, err := json.Marshal(user)
 	if err != nil {
-		return errors.Json(errors.ErrMalformedInput)
+		return errors.Json(errors.MalformedInput)
 	}
 
 	return buser
@@ -78,21 +62,21 @@ func Serialize(user *models.User) []byte {
 
 func MeErrorCheck(w http.ResponseWriter, err error) {
 	switch {
-	case err == errors.ErrDontMatch:
-		HttpJsonError(w, err, http.StatusUnauthorized)
-	case err == errors.ErrUserNotFound:
-		HttpJsonError(w, err, http.StatusBadRequest)
+	case err == errors.DontMatch:
+		errors.Http(w, err, http.StatusUnauthorized)
+	case err == errors.UserNotFound:
+		errors.Http(w, err, http.StatusBadRequest)
 	default:
-		HttpJsonError(w, err, http.StatusInternalServerError)
+		errors.Http(w, err, http.StatusInternalServerError)
 	}
 }
 
 func EmailErrorCheck(w http.ResponseWriter, err error) {
 	switch {
-	case err == errors.ErrUserNotFound:
-		HttpJsonError(w, err, http.StatusBadRequest)
+	case err == errors.UserNotFound:
+		errors.Http(w, err, http.StatusBadRequest)
 	default:
-		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
+		errors.Http(w, errors.InternalError, http.StatusInternalServerError)
 	}
 
 }

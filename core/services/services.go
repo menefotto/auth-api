@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -56,22 +55,13 @@ func (u *Users) Login(data []byte) (string, []byte, error) {
 	), csrf, nil
 }
 
-func (u *Users) Logout(cookie string, crsf string) error {
-	err := u.verifyRequest(cookie, crsf)
-	if err != nil {
-		return err
-	}
-
+func (u *Users) Logout(crsf string) error {
+	// do something
 	// add user blacklisting
 	return nil
 }
 
-func (u *Users) Me(cookie string, crsf string, data []byte) (*models.User, error) {
-	err := u.verifyRequest(cookie, crsf)
-	if err != nil {
-		return nil, err
-	}
-
+func (u *Users) Me(crsf string, data []byte) (*models.User, error) {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
@@ -264,22 +254,6 @@ func (u *Users) sendConfirmEmail(data []byte, title, tmplname, purl, code string
 	)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (u *Users) verifyRequest(cookie string, crsf string) error {
-	email, err := utils.ValueFromCrsf(crsf)
-	if err != nil {
-		return err
-	}
-	claims, err := utils.ClaimsFromJwt(cookie)
-	if err != nil {
-		return err
-	}
-	if strings.Compare(email, claims.Custom) != 0 {
-		return errors.ErrDontMatch
 	}
 
 	return nil
