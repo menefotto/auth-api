@@ -3,7 +3,6 @@ package managers
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -41,9 +40,9 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 
 	user.Password = string(hash)
 	user.Uuid = uuid.New()
-	user.Isactive = false
-	user.Isstaff = false
-	user.Issuperuser = false
+	user.Isactive = "false"
+	user.Isstaff = "false"
+	user.Issuperuser = "false"
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
 	user.Code = utils.GenerateJwt(
 		[]byte(user.Email),
@@ -57,27 +56,22 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (u *Users) Update(fields map[string]interface{}) (*models.User, error) {
+func (u *Users) Update(newUser *models.User) (*models.User, error) {
 
-	email, ok := fields["email"].(string)
-	if !ok {
-		return nil, errors.NotString
-	}
-
-	oldUser, err := u.store.Get(email)
+	oldUser, err := u.store.Get(newUser.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := u.updateFields(fields, oldUser); err != nil {
+	if err := u.updateFields(newUser, oldUser); err != nil {
 		return nil, err
 	}
 
 	return oldUser, nil
 }
 
-func (u *Users) Get(email string) (*models.User, error) {
-	user, err := u.store.Get(email)
+func (u *Users) Get(user *models.User) (*models.User, error) {
+	user, err := u.store.Get(user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +79,30 @@ func (u *Users) Get(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (u *Users) updateFields(mapped map[string]interface{}, old *models.User) error {
+func (u *Users) updateFields(new, old *models.User) error {
 
-	for k, value := range mapped {
-		if err := SetField(old, k, value); err != nil {
-			return err
-		}
+	switch {
+	case new.Username != "" && new.Username != old.Username:
+		old.Username = new.Username
+	case new.Firstname != "" && new.Firstname != old.Firstname:
+		old.Firstname = new.Firstname
+	case new.Lastname != "" && new.Lastname != old.Lastname:
+		old.Lastname = new.Lastname
+	case new.Password != "" && new.Password != old.Password:
+		old.Password = new.Password
+	case new.Email != "" && new.Email != old.Email:
+		old.Email = new.Email
+	case new.Photourl != "" && new.Photourl != old.Photourl:
+		old.Photourl = new.Photourl
+	case new.Isactive != "" && new.Isactive != old.Isactive:
+		old.Isactive = new.Isactive
+	case new.Issuperuser != "" && new.Issuperuser != old.Issuperuser:
+		old.Issuperuser = new.Issuperuser
+	case new.Isstaff != "" && new.Isstaff != old.Isstaff:
+		old.Isstaff = new.Isstaff
+	case new.Code != "" && new.Code != old.Code:
+		old.Code = new.Code
+
 	}
 
 	if err := u.store.Put(old.Email, old); err != nil {
@@ -124,27 +136,9 @@ func SetField(user *models.User, field string, value interface{}) error {
 	elem := reflect.ValueOf(user).Elem().FieldByName(fieldname)
 
 	switch {
-	case fieldname == "Isactive" || fieldname == "Issuperuser" || fieldname == "Isstaff":
-		s, ok := value.(string)
-		if !ok {
-			return errors.NotBool
-		}
-
-		b, err := strconv.ParseBool(s)
-		if err != nil {
-			return errors.NotBool
-		}
-
-		if elem.CanSet() {
-			elem.SetBool(b)
-			return nil
-		}
-
-	case fieldname == "Email" || fieldname == "Photourl" ||
-		fieldname == "Firstname" || fieldname == "Lastname" ||
-		fieldname == "Password" || fieldname == "Username" ||
-		fieldname == "Code" || fieldname == "Datajoined":
-
+	case fieldname == "Datejoined" || fieldname == "Uuid":
+		return nil
+	default:
 		s, ok := value.(string)
 		if !ok {
 			return errors.NotString
@@ -157,5 +151,5 @@ func SetField(user *models.User, field string, value interface{}) error {
 
 	}
 
-	return errors.New("Field: [" + strings.ToLower(fieldname) + "] cannot be set check spelling")
+	return errors.New("Field: [" + field + "] cannot be set check spelling")
 }

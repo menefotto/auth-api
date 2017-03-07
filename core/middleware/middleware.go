@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +14,7 @@ import (
 	"gopkg.in/throttled/throttled.v2/store/memstore"
 
 	"github.com/auth-api/core/errors"
+	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/utils"
 	"github.com/auth-api/core/views"
@@ -51,16 +54,24 @@ func ValidJson(next http.Handler) http.Handler {
 			return
 		}
 
-		buf := &bytes.Buffer{}
+		buf, user := &bytes.Buffer{}, &models.User{}
 		buf.ReadFrom(r.Body)
-		r.Body = ioutil.NopCloser(buf)
 
 		if r.Header.Get("Content-Type") != "application/json" {
 			errors.Http(w, errors.JsonPayload, http.StatusBadRequest)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		err := json.Unmarshal(buf.Bytes(), user)
+		if err != nil {
+			errors.Http(w, errors.JsonPayload, http.StatusBadRequest)
+			return
+		}
+		r.Body = ioutil.NopCloser(buf)
+
+		ctx := context.WithValue(r.Context(), "user", user)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -96,7 +107,7 @@ func ValidAuth(next http.Handler) http.Handler {
 func TimeOut(next http.Handler) http.Handler {
 	return http.TimeoutHandler(
 		next,
-		2*time.Second,
+		settings.REQ_TIME_OUT*time.Second,
 		string(errors.Json(errors.TimeOutReq)),
 	)
 }

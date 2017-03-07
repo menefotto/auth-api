@@ -3,11 +3,11 @@ package proxy
 import "math/rand"
 
 type Pool struct {
-	Connections map[*UsersJson]*int
+	Connections map[*UsersVerifier]*int
 }
 
 func NewPool(size int) *Pool {
-	p := &Pool{make(map[*UsersJson]*int, size)}
+	p := &Pool{make(map[*UsersVerifier]*int, size)}
 
 	for i := 0; i < size; i++ {
 		u := New()
@@ -18,7 +18,7 @@ func NewPool(size int) *Pool {
 	return p
 }
 
-func (p *Pool) Get() *UsersJson {
+func (p *Pool) Get() *UsersVerifier {
 
 	for k, v := range p.Connections {
 		if *v != 0 {
@@ -31,7 +31,7 @@ func (p *Pool) Get() *UsersJson {
 	return nil
 }
 
-func (p *Pool) Put(u *UsersJson) {
+func (p *Pool) Put(u *UsersVerifier) {
 
 	for _, v := range p.Connections {
 		if *v == 0 {

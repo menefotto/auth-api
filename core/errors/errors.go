@@ -26,6 +26,7 @@ var EmptyBody = New("Your request has an empty body")
 var NewCipher = New("New cipher erros")
 var NewGCM = New("New GCM crypto failure")
 var TimeOutReq = New("Request timed out")
+var EmailMissing = New("Email is required")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

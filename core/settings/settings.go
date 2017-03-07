@@ -1,5 +1,7 @@
 package settings
 
+import "time"
+
 // Required field by operation
 
 var CREATE_USER_FIELD_REQUIRED = []string{"Username", "Email", "Password"}
@@ -42,10 +44,12 @@ var EMAIL_TEMPLATE_DIR = "templates/emails"
 
 // Api specific settings
 
-var API_URL = "http://localhost:8080/"
+var API_URL = "http://localhost:8080/api/v1/"
 
 // RATE Limiting settings
 
 var RATE_LIMIT_REQS = 20 // requests par minute
 
 var RATE_LIMIT_BURST = 10 // request par minute
+
+var REQ_TIME_OUT time.Duration = 5 // request time out in seconds

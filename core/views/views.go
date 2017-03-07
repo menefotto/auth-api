@@ -19,7 +19,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, crsf, err := service.Login(data)
+	token, crsf, err := service.Login(data.Email, data.Password)
 	if err != nil {
 		errors.Http(w, err, http.StatusForbidden)
 		return

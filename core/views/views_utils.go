@@ -2,8 +2,6 @@ package views
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -14,18 +12,18 @@ import (
 	"github.com/auth-api/core/utils"
 )
 
-func GetRequestData(w http.ResponseWriter, r *http.Request) []byte {
+func GetRequestData(w http.ResponseWriter, r *http.Request) *models.User {
 	utils.HttpHeaderHelper(w)
 
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("Error:", err)
+	data := r.Context().Value("user")
+	user, ok := data.(*models.User)
+	if !ok {
 		errors.Http(w, errors.BodyNotValid, http.StatusBadRequest)
 
 		return nil
 	}
 
-	return data
+	return user
 }
 
 func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {

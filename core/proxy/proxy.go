@@ -1,24 +1,22 @@
 package proxy
 
 import (
-	"encoding/json"
-
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
 )
 
-type UsersJson struct {
+type UsersVerifier struct {
 	mng *managers.Users
 }
 
-func New() *UsersJson {
-	return &UsersJson{managers.New("Users")}
+func New() *UsersVerifier {
+	return &UsersVerifier{managers.New("Users")}
 }
 
-func (j *UsersJson) Create(data []byte) (*models.User, error) {
-	user, err := j.Build(data, "CREATE")
+func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {
+	err := j.mng.Verify(user, settings.CREATE_USER_FIELD_REQUIRED)
 	if err != nil {
 		return nil, err
 	}
@@ -31,13 +29,12 @@ func (j *UsersJson) Create(data []byte) (*models.User, error) {
 	return newuser, nil
 }
 
-func (j *UsersJson) Get(data []byte) (*models.User, *models.User, error) {
-	user, err := j.Build(data, "GET")
-	if err != nil {
-		return nil, nil, err
+func (j *UsersVerifier) Get(user *models.User) (*models.User, *models.User, error) {
+	if user.Email == "" {
+		return nil, nil, errors.EmailMissing
 	}
 
-	gotUser, err := j.mng.Get(user.Email)
+	gotUser, err := j.mng.Get(user)
 	if err != nil {
 		return nil, nil, errors.UserNotFound
 	}
@@ -45,47 +42,16 @@ func (j *UsersJson) Get(data []byte) (*models.User, *models.User, error) {
 	return gotUser, user, nil
 }
 
-func (j *UsersJson) Update(data []byte) (*models.User, error) {
-	var objects interface{}
-
-	err := json.Unmarshal(data, &objects)
-	if err != nil {
-		return nil, errors.MalformedInput
-	}
-
-	mapped, ok := objects.(map[string]interface{})
-	if !ok {
-		return nil, errors.MalformedInput
-	}
-
-	user, err := j.mng.Update(mapped)
+func (j *UsersVerifier) Update(user *models.User) (*models.User, error) {
+	err := j.mng.Verify(user, settings.UPDATE_USER_FIELD_REQUIRED)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
-}
-
-func (j *UsersJson) Build(data []byte, t string) (*models.User, error) {
-	user := &models.User{}
-
-	err := json.Unmarshal(data, user)
+	upUser, err := j.mng.Update(user)
 	if err != nil {
-		return nil, errors.MalformedInput
+		return nil, err
 	}
 
-	switch {
-	case t == "CREATE":
-		err = j.mng.Verify(user, settings.CREATE_USER_FIELD_REQUIRED)
-	case t == "UPDATE":
-		err = j.mng.Verify(user, settings.UPDATE_USER_FIELD_REQUIRED)
-	case t == "GET":
-		err = j.mng.Verify(user, settings.GET_USER_FIELD_REQUIRED)
-	}
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	return user, nil
+	return upUser, nil
 }

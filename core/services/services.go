@@ -26,12 +26,12 @@ func New(poolsize int) *Users {
 	}
 }
 
-func (u *Users) Login(data []byte) (string, []byte, error) {
+func (u *Users) Login(email, password string) (string, []byte, error) {
 
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, buser, err := mng.Get(data)
+	user, buser, err := mng.Get(&models.User{Email: email, Password: password})
 	if err != nil {
 		return "", nil, err
 	}
@@ -61,7 +61,7 @@ func (u *Users) Logout(crsf string) error {
 	return nil
 }
 
-func (u *Users) Me(crsf string, data []byte) (*models.User, error) {
+func (u *Users) Me(crsf string, data *models.User) (*models.User, error) {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
@@ -79,7 +79,7 @@ func (u *Users) Me(crsf string, data []byte) (*models.User, error) {
 		return nil, err
 	}
 
-	other, _, err := mng.Get([]byte(`{"email":"` + email + `"}`))
+	other, _, err := mng.Get(&models.User{Email: email})
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (u *Users) Me(crsf string, data []byte) (*models.User, error) {
 	return other, nil
 }
 
-func (u *Users) Register(data []byte) error {
+func (u *Users) Register(data *models.User) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
@@ -110,9 +110,9 @@ func (u *Users) Register(data []byte) error {
 	return nil
 }
 
-func (u *Users) Activation(data []byte) error {
+func (u *Users) Activation(data *models.User) error {
 	err := u.sendConfirmEmail(
-		data,
+		data.Email,
 		"Activation Link",
 		"activation",
 		"activation_confirm", "",
@@ -133,7 +133,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 		return errors.New(err.Error())
 	}
 
-	gotUser, _, err := mng.Get([]byte(`{"email":"` + claims.Custom + `"}`))
+	gotUser, _, err := mng.Get(&models.User{Email: claims.Custom})
 	if err != nil {
 		return err
 	}
@@ -142,8 +142,8 @@ func (u *Users) ActivationConfirm(data []byte) error {
 		return errors.CodeNotValid
 	}
 
-	activatemsg := `{"isactive":"true","email":"` + claims.Custom + `"}`
-	user, err := mng.Update([]byte(activatemsg))
+	activate := &models.User{Isactive: "true", Email: claims.Custom}
+	user, err := mng.Update(activate)
 	if err != nil {
 		return err
 	}
@@ -160,14 +160,14 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	return nil
 }
 
-func (u *Users) PasswordReset(data []byte) error {
+func (u *Users) PasswordReset(data *models.User) error {
 
 	code := utils.GenerateJwt(nil, settings.JWT_PASSWORD_DELTA)
 
 	u.cache.Put(code, data)
 
 	err := u.sendConfirmEmail(
-		data,
+		data.Email,
 		"Password Reset Link",
 		"password_reset",
 		"password/reset/confirm",
@@ -212,9 +212,9 @@ func (u *Users) PasswordResetConfirm(data []byte) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	msg := `{"email":"` + content.Email + `","password":"` + string(pass) + `"}`
+	userup := &models.User{Email: content.Email, Password: string(pass)}
 
-	user, err := mng.Update([]byte(msg))
+	user, err := mng.Update(userup)
 	if err != nil {
 		return err
 	}
@@ -230,13 +230,13 @@ func (u *Users) PasswordResetConfirm(data []byte) error {
 	return nil
 }
 
-func (u *Users) sendConfirmEmail(data []byte, title, tmplname, purl, code string) error {
+func (u *Users) sendConfirmEmail(email, title, tmplname, purl, code string) error {
 	var url string
 
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, _, err := mng.Get(data)
+	user, _, err := mng.Get(&models.User{Email: email})
 	if err != nil {
 		return err
 	}
