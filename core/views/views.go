@@ -37,30 +37,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	token, crsf := GetCookieAndCrsf(w, r)
+	_, crsf := GetCookieAndCrsf(w, r)
 
-	if crsf != "" && token != "" {
-		err := service.Logout(token, crsf)
-		if err != nil {
-			errors.Http(w, err, http.StatusUnauthorized)
-			return
-		}
-
-		cookies.Clear(w)
-
-		w.WriteHeader(http.StatusOK)
+	err := service.Logout(crsf)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
 		return
 	}
 
-	if crsf != "" && token == "" {
-		errors.Http(w, errors.CrsfMissing, http.StatusUnauthorized)
-		return
-	}
+	cookies.Clear(w)
 
-	if crsf == "" && token != "" {
-		errors.Http(w, errors.TokCookieMissing, http.StatusUnauthorized)
-		return
-	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +65,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err = service.Me(token, crsf, data)
+		user, err = service.Me(crsf, data)
 		if err != nil {
 			MeErrorCheck(w, err)
 			return
@@ -88,7 +75,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	utils.HttpHeaderHelper(w)
 
 	if r.Method == http.MethodGet {
-		user, err = service.Me(token, crsf, nil)
+		user, err = service.Me(crsf, nil)
 		if err != nil {
 			MeErrorCheck(w, err)
 			return

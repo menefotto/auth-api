@@ -139,7 +139,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	}
 
 	if gotUser.Code != string(data) {
-		return errors.ErrCodeNotValid
+		return errors.CodeNotValid
 	}
 
 	activatemsg := `{"isactive":"true","email":"` + claims.Custom + `"}`
@@ -188,25 +188,25 @@ type passwordReset struct {
 func (u *Users) PasswordResetConfirm(data []byte) error {
 	value, ok := u.cache.Get(string(data))
 	if !ok {
-		return errors.ErrUserNotFound
+		return errors.UserNotFound
 	}
 
 	code, ok := value.([]byte)
 	if !ok {
-		return errors.ErrNotValid
+		return errors.NotValid
 	}
 
 	content := &passwordReset{}
 	err := json.Unmarshal(code, content)
 	if err != nil {
-		return errors.ErrJsonPayload
+		return errors.JsonPayload
 	}
 
 	pass, err := bcrypt.GenerateFromPassword(
 		[]byte(content.Password), bcrypt.MinCost,
 	)
 	if err != nil {
-		return errors.ErrInternalError
+		return errors.InternalError
 	}
 
 	mng := u.pool.Get()

@@ -61,7 +61,7 @@ func (u *Users) Update(fields map[string]interface{}) (*models.User, error) {
 
 	email, ok := fields["email"].(string)
 	if !ok {
-		return nil, errors.ErrNotString
+		return nil, errors.NotString
 	}
 
 	oldUser, err := u.store.Get(email)
@@ -127,12 +127,12 @@ func SetField(user *models.User, field string, value interface{}) error {
 	case fieldname == "Isactive" || fieldname == "Issuperuser" || fieldname == "Isstaff":
 		s, ok := value.(string)
 		if !ok {
-			return errors.ErrNotBool
+			return errors.NotBool
 		}
 
 		b, err := strconv.ParseBool(s)
 		if err != nil {
-			return errors.ErrNotBool
+			return errors.NotBool
 		}
 
 		if elem.CanSet() {
@@ -147,7 +147,7 @@ func SetField(user *models.User, field string, value interface{}) error {
 
 		s, ok := value.(string)
 		if !ok {
-			return errors.ErrNotString
+			return errors.NotString
 		}
 
 		if elem.CanSet() {

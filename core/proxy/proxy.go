@@ -25,7 +25,7 @@ func (j *UsersJson) Create(data []byte) (*models.User, error) {
 
 	newuser, err := j.mng.Create(user)
 	if err != nil {
-		return nil, errors.ErrInternalDb
+		return nil, errors.InternalDb
 	}
 
 	return newuser, nil
@@ -39,7 +39,7 @@ func (j *UsersJson) Get(data []byte) (*models.User, *models.User, error) {
 
 	gotUser, err := j.mng.Get(user.Email)
 	if err != nil {
-		return nil, nil, errors.ErrUserNotFound
+		return nil, nil, errors.UserNotFound
 	}
 
 	return gotUser, user, nil
@@ -50,12 +50,12 @@ func (j *UsersJson) Update(data []byte) (*models.User, error) {
 
 	err := json.Unmarshal(data, &objects)
 	if err != nil {
-		return nil, errors.ErrMalformedInput
+		return nil, errors.MalformedInput
 	}
 
 	mapped, ok := objects.(map[string]interface{})
 	if !ok {
-		return nil, errors.ErrMalformedInput
+		return nil, errors.MalformedInput
 	}
 
 	user, err := j.mng.Update(mapped)
@@ -71,7 +71,7 @@ func (j *UsersJson) Build(data []byte, t string) (*models.User, error) {
 
 	err := json.Unmarshal(data, user)
 	if err != nil {
-		return nil, errors.ErrMalformedInput
+		return nil, errors.MalformedInput
 	}
 
 	switch {

@@ -43,3 +43,9 @@ var EMAIL_TEMPLATE_DIR = "templates/emails"
 // Api specific settings
 
 var API_URL = "http://localhost:8080/"
+
+// RATE Limiting settings
+
+var RATE_LIMIT_REQS = 20 // requests par minute
+
+var RATE_LIMIT_BURST = 10 // request par minute

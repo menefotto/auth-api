@@ -34,7 +34,7 @@ func Get(w http.ResponseWriter, r *http.Request) (string, error) {
 
 	}
 
-	return "", errors.ErrCookieNotFound
+	return "", errors.CookieNotFound
 }
 
 // Clear cookie delete cookies

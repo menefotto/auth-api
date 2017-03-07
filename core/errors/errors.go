@@ -25,6 +25,7 @@ var FailedPassUpdate = New("Failed to update password")
 var EmptyBody = New("Your request has an empty body")
 var NewCipher = New("New cipher erros")
 var NewGCM = New("New GCM crypto failure")
+var TimeOutReq = New("Request timed out")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}
