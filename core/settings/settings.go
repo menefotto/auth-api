@@ -59,3 +59,7 @@ var REQ_TIME_OUT time.Duration = 5 // request time out in seconds
 // Blacklist purging interval
 
 var BLACK_LIST_INTERVAL time.Duration = 3 // minutes
+
+// Api prefix
+
+var API_PREFIX = "/api/v1"

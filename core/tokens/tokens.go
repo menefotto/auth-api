@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/json"
-	"log"
 	"time"
 
 	"google.golang.org/api/iterator"
@@ -89,7 +88,7 @@ func (c *tokenList) Valid(key string) bool {
 	if err == datastore.ErrNoSuchEntity {
 		return true
 	}
-	log.Println("Token: ", tok)
+
 	// improvement needed here, it should not be better error checks
 	return false
 }

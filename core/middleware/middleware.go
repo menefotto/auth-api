@@ -105,7 +105,7 @@ func Auth(next http.Handler) http.Handler {
 		t2 := time.Now()
 
 		// lookup timing
-		log.Printf("Lookup price [%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+		log.Printf("[%s BlakList Lookup Price ] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 		// token verification done here
 
 		ctx := AddToCtx(r.Context(), "jwt", jwt)

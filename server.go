@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/auth-api/core/middleware"
+	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/views"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -29,7 +30,7 @@ func main() {
 		middleware.Auth, middleware.Recover)
 
 	r := mux.NewRouter()
-	p := r.PathPrefix("/api/v1").Subrouter()
+	p := r.PathPrefix(settings.API_PREFIX).Subrouter()
 
 	p.Handle("/login",
 		pubblic_post.ThenFunc(views.Login)).
