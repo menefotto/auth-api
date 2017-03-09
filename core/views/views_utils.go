@@ -9,6 +9,7 @@ import (
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/utils"
 )
 
@@ -32,7 +33,7 @@ func GetClaimsAndJwt(w http.ResponseWriter, r *http.Request) (string, string) {
 		return "", ""
 	}
 
-	claims, err := utils.ClaimsFromJwt(token)
+	claims, err := tokens.ClaimsFromJwt(token)
 	if err != nil {
 		errors.Http(w, err, http.StatusUnauthorized)
 		return "", ""

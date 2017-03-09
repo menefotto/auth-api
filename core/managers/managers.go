@@ -11,7 +11,7 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/google"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/utils"
+	"github.com/auth-api/core/tokens"
 	"github.com/pborman/uuid"
 
 	"github.com/auth-api/core/settings"
@@ -44,7 +44,7 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	user.Isstaff = "false"
 	user.Issuperuser = "false"
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
-	user.Code = utils.GenerateJwt(
+	user.Code = tokens.GenerateJwt(
 		[]byte(user.Email),
 		settings.JWT_ACTIVATION_DELTA,
 	)
@@ -57,7 +57,6 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 }
 
 func (u *Users) Update(newUser *models.User) (*models.User, error) {
-	_,err := u.store.Backend().RunInTransaction(context.Background(),func(tx *datastore.Transaction) error {
 	oldUser, err := u.store.Get(newUser.Email)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,6 @@ func (u *Users) Update(newUser *models.User) (*models.User, error) {
 		// to stuff
 	}
 
-}
 	return oldUser, nil
 }
 

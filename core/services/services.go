@@ -10,6 +10,7 @@ import (
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/proxy"
 	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/utils"
 	"github.com/tcache"
 )
@@ -41,12 +42,12 @@ func (u *Users) Login(email, password string) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	csrf, err := utils.GenerateCrsf(user.Email)
+	csrf, err := tokens.GenerateCrsf(user.Email)
 	if err != nil {
 		return "", nil, err
 	}
 
-	return utils.GenerateJwt(
+	return tokens.GenerateJwt(
 		[]byte(user.Email),
 		settings.JWT_LOGIN_DELTA,
 	), csrf, nil
@@ -118,7 +119,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	claims, err := utils.ClaimsFromJwt(string(data))
+	claims, err := tokens.ClaimsFromJwt(string(data))
 	if err != nil {
 		return errors.New(err.Error())
 	}
@@ -152,7 +153,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 
 func (u *Users) PasswordReset(data *models.User) error {
 
-	code := utils.GenerateJwt(nil, settings.JWT_PASSWORD_DELTA)
+	code := tokens.GenerateJwt(nil, settings.JWT_PASSWORD_DELTA)
 
 	u.cache.Put(code, data)
 
