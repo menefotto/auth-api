@@ -17,6 +17,7 @@ import (
 	"github.com/auth-api/core/settings"
 	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/net/xsrftoken"
 )
 
 type customClaims struct {
@@ -78,17 +79,15 @@ type CrsfToken struct {
 	Token string `json:"crsf"`
 }
 
-func GenerateCrsf(data string) ([]byte, error) {
-	payload, err := Encrypt(data)
+func GenerateCrsf(email string) ([]byte, error) {
+	payload := xsrftoken.Generate(
+		settings.CRYPTO_SECRET,
+		email,
+		settings.CRSF_ACTION_ID,
+	)
+	csrf, err := json.Marshal(&CrsfToken{payload})
 	if err != nil {
-		return []byte(""), nil
-	}
-
-	token := &CrsfToken{payload}
-
-	csrf, err := json.Marshal(token)
-	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 
 	return csrf, nil

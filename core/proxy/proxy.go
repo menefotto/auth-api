@@ -29,17 +29,17 @@ func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {
 	return newuser, nil
 }
 
-func (j *UsersVerifier) Get(user *models.User) (*models.User, *models.User, error) {
+func (j *UsersVerifier) Get(user *models.User) (*models.User, error) {
 	if user.Email == "" {
-		return nil, nil, errors.EmailMissing
+		return nil, errors.EmailMissing
 	}
 
 	gotUser, err := j.mng.Get(user)
 	if err != nil {
-		return nil, nil, errors.UserNotFound
+		return nil, errors.UserNotFound
 	}
 
-	return gotUser, user, nil
+	return gotUser, nil
 }
 
 func (j *UsersVerifier) Update(user *models.User) (*models.User, error) {

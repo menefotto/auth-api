@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
+
+	"golang.org/x/net/xsrftoken"
 
 	throttled "gopkg.in/throttled/throttled.v2"
 	"gopkg.in/throttled/throttled.v2/store/memstore"
@@ -83,19 +84,14 @@ func ValidAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		email, err := utils.ValueFromCrsf(crsf)
-		if err != nil {
-			errors.Http(w, err, http.StatusUnauthorized)
-			return
-		}
-
 		claims, err := utils.ClaimsFromJwt(cookie)
 		if err != nil {
 			errors.Http(w, err, http.StatusUnauthorized)
 			return
 		}
 
-		if strings.Compare(email, claims.Custom) != 0 {
+		if !xsrftoken.Valid(crsf, settings.CRYPTO_SECRET,
+			claims.Custom, settings.CRSF_ACTION_ID) {
 			errors.Http(w, errors.DontMatch, http.StatusUnauthorized)
 			return
 		}

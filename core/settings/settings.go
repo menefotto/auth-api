@@ -30,6 +30,8 @@ var CRYPTO_SECRET = "AES256Key-32Characters1234567890"
 
 var NONCE = "bb8ef84243d2ee95a41c6c57"
 
+var CRSF_ACTION_ID = "validate"
+
 // Email settings
 
 var EMAIL_PASSWORD = "Stovari1985"

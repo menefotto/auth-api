@@ -31,15 +31,12 @@ func (u *Users) Login(email, password string) (string, []byte, error) {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, buser, err := mng.Get(&models.User{Email: email, Password: password})
+	user, err := mng.Get(&models.User{Email: email, Password: password})
 	if err != nil {
 		return "", nil, err
 	}
 
-	err = utils.CheckPassword(
-		user.Password,
-		buser.Password,
-	)
+	err = utils.CheckPassword(user.Password, password)
 	if err != nil {
 		return "", nil, err
 	}
@@ -55,6 +52,27 @@ func (u *Users) Login(email, password string) (string, []byte, error) {
 	), csrf, nil
 }
 
+func (u *Users) Register(data *models.User) error {
+	mng := u.pool.Get()
+	defer u.pool.Put(mng)
+
+	user, err := mng.Create(data)
+	if err != nil {
+		return err
+	}
+
+	err = u.sendConfirmEmail(
+		user.Email,
+		"Registration Link",
+		"registration",
+		"activation/confirm", "",
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func (u *Users) Logout(crsf string) error {
 	// do something
 	// add user blacklisting
@@ -79,34 +97,12 @@ func (u *Users) Me(crsf string, data *models.User) (*models.User, error) {
 		return nil, err
 	}
 
-	other, _, err := mng.Get(&models.User{Email: email})
+	other, err := mng.Get(&models.User{Email: email})
 	if err != nil {
 		return nil, err
 	}
 
 	return other, nil
-}
-
-func (u *Users) Register(data *models.User) error {
-	mng := u.pool.Get()
-	defer u.pool.Put(mng)
-
-	user, err := mng.Create(data)
-	if err != nil {
-		return err
-	}
-
-	err = u.sendConfirmEmail(
-		user.Email,
-		"Registration Link",
-		"registration",
-		"activation/confirm", "",
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (u *Users) Activation(data *models.User) error {
@@ -132,7 +128,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 		return errors.New(err.Error())
 	}
 
-	gotUser, _, err := mng.Get(&models.User{Email: claims.Custom})
+	gotUser, err := mng.Get(&models.User{Email: claims.Custom})
 	if err != nil {
 		return err
 	}
@@ -235,7 +231,7 @@ func (u *Users) sendConfirmEmail(email, title, tmplname, purl, code string) erro
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
-	user, _, err := mng.Get(&models.User{Email: email})
+	user, err := mng.Get(&models.User{Email: email})
 	if err != nil {
 		return err
 	}
