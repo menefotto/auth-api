@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"encoding/json"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,15 +17,11 @@ func TestApiError(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	b := []byte(`{"Username":"wind85","Email":"carlo@email.com","Password":"1234"}`)
+	u := &models.User{Username: "wind85", Email: "carlo@email.com", Password: "1234"}
 
 	userapi := New()
-	buser, _ := userapi.Create(b)
+	buser, _ := userapi.Create(u)
 	user := &models.User{}
-	err := json.Unmarshal(b, user)
-	if err != nil {
-		t.Fatal("Unmarshalling user gone wrong!")
-	}
 
 	if user.Username != buser.Username {
 		t.Fatal("Something is wrong!")
@@ -36,33 +31,23 @@ func TestCreate(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.MinCost)
 
-	b := []byte(`{"Username":"carlo85","Email":"carlo@email.com","Password":"` + string(hash) + `"}`)
+	u := &models.User{Username: "wind85", Email: "carlo@email.com", Password: "12345678"}
 
 	userapi := New()
-	buser, _ := userapi.Update(b)
-	user := &models.User{}
-	err := json.Unmarshal(b, user)
-	if err != nil {
-		t.Fatal("Unmarshalling user gone wrong!")
-	}
+	buser, _ := userapi.Update(u)
 
-	if user.Username != buser.Username {
+	if string(hash) != buser.Username {
 		t.Fatal("Something is wrong!")
 	}
 }
 
 func TestGet(t *testing.T) {
-	b := []byte(`{"Email":"carlo@email.com"}`)
+	b := &models.User{Email: "carlo@email.com"}
 
 	userapi := New()
-	buser, _, _ := userapi.Get(b)
-	user := &models.User{}
-	err := json.Unmarshal(b, user)
-	if err != nil {
-		t.Fatal("Unmarshalling user gone wrong!")
-	}
+	buser, _ := userapi.Get(b)
 
-	if user.Email != buser.Email {
+	if b.Email != buser.Email {
 		t.Fatal("Something is wrong!")
 	}
 }

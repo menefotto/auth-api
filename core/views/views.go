@@ -5,22 +5,19 @@ import (
 
 	"github.com/auth-api/core/cookies"
 	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/services"
+	"github.com/auth-api/core/utils"
 	"github.com/gorilla/mux"
 )
 
 var service = services.New(10)
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data == nil {
-		return
-	}
+	user, _, _ := GetRequestData(w, r)
 
-	token, crsf, err := service.Login(data)
+	token, crsf, err := service.Login(user.Email, user.Password)
 	if err != nil {
-		HttpJsonError(w, err, http.StatusForbidden)
+		errors.Http(w, err, http.StatusForbidden)
 		return
 	}
 
@@ -28,147 +25,103 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	n, err := w.Write(crsf)
 	if err != nil || n != len(crsf) {
-		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
+		errors.Http(w, errors.InternalError, http.StatusInternalServerError)
 		return
 	}
 
+	utils.HttpHeaderHelper(w)
 	w.WriteHeader(http.StatusOK)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	token, crsf := GetCookieAndCrsf(w, r)
-
-	if crsf != "" && token != "" {
-		err := service.Logout(token, crsf)
-		if err != nil {
-			HttpJsonError(w, err, http.StatusUnauthorized)
-			return
-		}
-
-		cookies.Clear(w)
-
-		w.WriteHeader(http.StatusOK)
+	_, jwt, claims := GetRequestData(w, r)
+	err := service.Logout(jwt, claims)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
 		return
 	}
 
-	if crsf != "" && token == "" {
-		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusUnauthorized)
-		return
-	}
+	cookies.Clear(w)
 
-	if crsf == "" && token != "" {
-		HttpJsonError(w, errors.ErrTokCookieMissing, http.StatusUnauthorized)
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
-	token, crsf := GetCookieAndCrsf(w, r)
-	if token == "" || crsf == "" {
+
+	user, _, claims := GetRequestData(w, r)
+	newuser, err := service.Me(claims, user)
+	if err != nil {
+		switch {
+		case err == errors.DontMatch:
+			errors.Http(w, err, http.StatusUnauthorized)
+		case err == errors.UserNotFound:
+			errors.Http(w, err, http.StatusBadRequest)
+		default:
+			errors.Http(w, err, http.StatusInternalServerError)
+		}
 		return
 	}
 
-	user := &models.User{}
-	var err error
-
-	if r.Method == http.MethodPost {
-		data := ViewsModifierHelper(w, r)
-		if data == nil {
-			return
-		}
-
-		user, err = service.Me(token, crsf, data)
-		if err != nil {
-			MeErrorCheck(w, err)
-			return
-		}
-	}
-
-	HeaderHelper(w)
-
-	if r.Method == http.MethodGet {
-		user, err = service.Me(token, crsf, nil)
-		if err != nil {
-			MeErrorCheck(w, err)
-			return
-
-		}
-	}
-
-	w.Write(Serialize(user))
+	utils.HttpHeaderHelper(w)
+	w.Write(Serialize(newuser))
 	w.WriteHeader(http.StatusOK)
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data == nil {
+	user, _, _ := GetRequestData(w, r)
+	err := service.Register(user)
+	if err != nil {
+		switch {
+		case err == errors.InternalDb:
+			errors.Http(w, err, http.StatusBadRequest)
+		case err == errors.MalformedInput:
+			errors.Http(w, err, http.StatusBadRequest)
+		default:
+			errors.Http(w, err, http.StatusInternalServerError)
+		}
 		return
 	}
 
-	if data != nil {
-		err := service.Register(data)
-		if err != nil {
-			switch {
-			case err == errors.ErrInternalDb:
-				HttpJsonError(w, err, http.StatusBadRequest)
-			case err == errors.ErrMalformedInput:
-				HttpJsonError(w, err, http.StatusBadRequest)
-			default:
-				HttpJsonError(w, err, http.StatusInternalServerError)
-			}
-			return
-		}
-	}
-
+	utils.HttpHeaderHelper(w)
 	w.WriteHeader(http.StatusCreated)
 }
 
 func Activation(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data == nil {
-		return
-	}
-
-	err := service.Activation(data)
+	user, _, _ := GetRequestData(w, r)
+	err := service.Activation(user)
 	if err != nil {
-		EmailErrorCheck(w, err)
+		EmailCheck(err, w, r)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func ActivationConfirm(w http.ResponseWriter, r *http.Request) {
 	err := service.ActivationConfirm([]byte(mux.Vars(r)["tok"]))
 	if err != nil {
-		HttpJsonError(w, err, http.StatusExpectationFailed)
+		errors.Http(w, err, http.StatusInternalServerError)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func PasswordReset(w http.ResponseWriter, r *http.Request) {
-	data := ViewsModifierHelper(w, r)
-	if data == nil {
-		return
-	}
-
-	err := service.PasswordReset(data)
+	user, _, _ := GetRequestData(w, r)
+	err := service.PasswordReset(user)
 	if err != nil {
-		EmailErrorCheck(w, err)
+		EmailCheck(err, w, r)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func PasswordResetConfirm(w http.ResponseWriter, r *http.Request) {
 	err := service.PasswordResetConfirm([]byte(mux.Vars(r)["tok"]))
 	if err != nil {
-		EmailErrorCheck(w, err)
+		errors.Http(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	return
+	w.WriteHeader(http.StatusNoContent)
 }

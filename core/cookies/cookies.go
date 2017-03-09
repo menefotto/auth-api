@@ -1,7 +1,6 @@
 package cookies
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/auth-api/core/errors"
@@ -31,12 +30,11 @@ func Get(w http.ResponseWriter, r *http.Request) (string, error) {
 		var value string
 		if err = s.Decode("token", cookie.Value, &value); err == nil {
 			return value, nil
-		} else {
-			log.Println(err)
 		}
+
 	}
 
-	return "", errors.ErrCookieNotFound
+	return "", errors.CookieNotFound
 }
 
 // Clear cookie delete cookies

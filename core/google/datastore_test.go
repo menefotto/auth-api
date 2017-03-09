@@ -69,7 +69,7 @@ func TestGstoreNewKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	k := db.newKey("1234")
+	k := db.NewKey("1234")
 	if k == nil {
 		t.Fatal(err)
 	}

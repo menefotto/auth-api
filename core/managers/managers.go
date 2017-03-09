@@ -3,7 +3,6 @@ package managers
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/google"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/utils"
+	"github.com/auth-api/core/tokens"
 	"github.com/pborman/uuid"
 
 	"github.com/auth-api/core/settings"
@@ -41,11 +40,11 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 
 	user.Password = string(hash)
 	user.Uuid = uuid.New()
-	user.Isactive = false
-	user.Isstaff = false
-	user.Issuperuser = false
+	user.Isactive = "false"
+	user.Isstaff = "false"
+	user.Issuperuser = "false"
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
-	user.Code = utils.GenerateJwt(
+	user.Code = tokens.GenerateJwt(
 		[]byte(user.Email),
 		settings.JWT_ACTIVATION_DELTA,
 	)
@@ -57,27 +56,26 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (u *Users) Update(fields map[string]interface{}) (*models.User, error) {
-
-	email, ok := fields["email"].(string)
-	if !ok {
-		return nil, errors.ErrNotString
-	}
-
-	oldUser, err := u.store.Get(email)
+func (u *Users) Update(newUser *models.User) (*models.User, error) {
+	oldUser, err := u.store.Get(newUser.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := u.updateFields(fields, oldUser); err != nil {
+	u.updateFields(newUser, oldUser)
+
+	if err := u.store.Put(oldUser.Email, oldUser); err != nil {
 		return nil, err
+	}
+	if err != nil {
+		// to stuff
 	}
 
 	return oldUser, nil
 }
 
-func (u *Users) Get(email string) (*models.User, error) {
-	user, err := u.store.Get(email)
+func (u *Users) Get(user *models.User) (*models.User, error) {
+	user, err := u.store.Get(user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -85,19 +83,32 @@ func (u *Users) Get(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (u *Users) updateFields(mapped map[string]interface{}, old *models.User) error {
+func (u *Users) updateFields(new, old *models.User) {
 
-	for k, value := range mapped {
-		if err := SetField(old, k, value); err != nil {
-			return err
-		}
+	switch {
+	case new.Username != "" && new.Username != old.Username:
+		old.Username = new.Username
+	case new.Firstname != "" && new.Firstname != old.Firstname:
+		old.Firstname = new.Firstname
+	case new.Lastname != "" && new.Lastname != old.Lastname:
+		old.Lastname = new.Lastname
+	case new.Password != "" && new.Password != old.Password:
+		old.Password = new.Password
+	case new.Email != "" && new.Email != old.Email:
+		old.Email = new.Email
+	case new.Photourl != "" && new.Photourl != old.Photourl:
+		old.Photourl = new.Photourl
+	case new.Isactive != "" && new.Isactive != old.Isactive:
+		old.Isactive = new.Isactive
+	case new.Issuperuser != "" && new.Issuperuser != old.Issuperuser:
+		old.Issuperuser = new.Issuperuser
+	case new.Isstaff != "" && new.Isstaff != old.Isstaff:
+		old.Isstaff = new.Isstaff
+	case new.Code != "" && new.Code != old.Code:
+		old.Code = new.Code
+
 	}
 
-	if err := u.store.Put(old.Email, old); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (u *Users) Verify(user *models.User, settings []string) error {
@@ -124,30 +135,12 @@ func SetField(user *models.User, field string, value interface{}) error {
 	elem := reflect.ValueOf(user).Elem().FieldByName(fieldname)
 
 	switch {
-	case fieldname == "Isactive" || fieldname == "Issuperuser" || fieldname == "Isstaff":
+	case fieldname == "Datejoined" || fieldname == "Uuid":
+		return nil
+	default:
 		s, ok := value.(string)
 		if !ok {
-			return errors.ErrNotBool
-		}
-
-		b, err := strconv.ParseBool(s)
-		if err != nil {
-			return errors.ErrNotBool
-		}
-
-		if elem.CanSet() {
-			elem.SetBool(b)
-			return nil
-		}
-
-	case fieldname == "Email" || fieldname == "Photourl" ||
-		fieldname == "Firstname" || fieldname == "Lastname" ||
-		fieldname == "Password" || fieldname == "Username" ||
-		fieldname == "Code" || fieldname == "Datajoined":
-
-		s, ok := value.(string)
-		if !ok {
-			return errors.ErrNotString
+			return errors.NotString
 		}
 
 		if elem.CanSet() {
@@ -157,5 +150,5 @@ func SetField(user *models.User, field string, value interface{}) error {
 
 	}
 
-	return errors.New("Field: [" + strings.ToLower(fieldname) + "] cannot be set check spelling")
+	return errors.New("Field: [" + field + "] cannot be set check spelling")
 }

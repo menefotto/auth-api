@@ -1,5 +1,7 @@
 package settings
 
+import "time"
+
 // Required field by operation
 
 var CREATE_USER_FIELD_REQUIRED = []string{"Username", "Email", "Password"}
@@ -28,6 +30,8 @@ var CRYPTO_SECRET = "AES256Key-32Characters1234567890"
 
 var NONCE = "bb8ef84243d2ee95a41c6c57"
 
+var CRSF_ACTION_ID = "validate"
+
 // Email settings
 
 var EMAIL_PASSWORD = "Stovari1985"
@@ -42,4 +46,20 @@ var EMAIL_TEMPLATE_DIR = "templates/emails"
 
 // Api specific settings
 
-var API_URL = "http://localhost:8080/"
+var API_URL = "http://localhost:8080/api/v1/"
+
+// RATE Limiting settings
+
+var RATE_LIMIT_REQS = 20 // requests par minute
+
+var RATE_LIMIT_BURST = 10 // request par minute
+
+var REQ_TIME_OUT time.Duration = 5 // request time out in seconds
+
+// Blacklist purging interval
+
+var BLACK_LIST_INTERVAL time.Duration = 3 // minutes
+
+// Api prefix
+
+var API_PREFIX = "/api/v1"

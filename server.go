@@ -4,25 +4,69 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/auth-api/core/middleware"
+	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/views"
 	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
 )
 
 func main() {
+	base := alice.New(middleware.RateLimiter,
+		middleware.TimeOut, middleware.Logging)
+
+	pubblic_get := base.Append(middleware.Recover)
+
+	pubblic_post := base.Append(middleware.AddContext,
+		middleware.ToJson, middleware.Recover)
+
+	private_get := base.Append(middleware.AddContext,
+		middleware.Auth, middleware.Recover)
+
+	private_post := base.Append(middleware.AddContext, middleware.ToJson,
+		middleware.Auth, middleware.Recover)
+
+	private_post_empty := base.Append(middleware.AddContext,
+		middleware.Auth, middleware.Recover)
+
 	r := mux.NewRouter()
+	p := r.PathPrefix(settings.API_PREFIX).Subrouter()
 
-	r.HandleFunc("/login", views.Login).Methods("POST").Name("login")
-	r.HandleFunc("/logout", views.Logout).Methods("POST").Name("logout")
+	p.Handle("/login",
+		pubblic_post.ThenFunc(views.Login)).
+		Methods("POST").Name("login")
 
-	r.HandleFunc("/me", views.Me).Methods("POST", "GET").Name("me")
+	p.Handle("/logout",
+		private_post_empty.ThenFunc(views.Logout)).
+		Methods("POST").Name("logout")
 
-	r.HandleFunc("/register", views.Register).Methods("POST").Name("register")
+	p.Handle("/users/me",
+		private_get.ThenFunc(views.Me)).
+		Methods("GET").Name("me")
 
-	r.HandleFunc("/activation", views.Activation).Methods("POST").Name("activation")
-	r.HandleFunc("/activation/confirm/{tok:[A-Za-z0-9._-]+}", views.ActivationConfirm).Methods("GET").Name("activation_confirm")
+	p.Handle("users/me/update",
+		private_post.ThenFunc(views.Me)).
+		Methods("POST").Name("update/me")
 
-	r.HandleFunc("/password/reset", views.PasswordReset).Methods("POST").Name("password_reset")
-	r.HandleFunc("/password/reset/confirm/{tok:[A-Za-z0-9._-]+}", views.PasswordResetConfirm).Methods("GET").Name("password_reset_confirm")
+	p.Handle("/register",
+		pubblic_post.ThenFunc(views.Register)).
+		Methods("POST").Name("register")
+
+	p.Handle("/activation",
+		pubblic_post.ThenFunc(views.Activation)).
+		Methods("POST").Name("activation")
+
+	p.Handle("/activation/confirm/{tok:[A-Za-z0-9._-]+}",
+		pubblic_get.ThenFunc(views.ActivationConfirm)).
+		Methods("GET").Name("activation_confirm")
+
+	p.Handle("/password/reset",
+		pubblic_post.ThenFunc(views.PasswordReset)).
+		Methods("POST").Name("password_reset")
+
+	p.Handle("/password/reset/confirm/{tok:[A-Za-z0-9._-]+}",
+		pubblic_get.ThenFunc(views.PasswordResetConfirm)).
+		Methods("GET").Name("password_reset_confirm")
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

@@ -2,8 +2,6 @@ package views
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/auth-api/core/cookies"
@@ -11,53 +9,37 @@ import (
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/tokens"
+	"github.com/auth-api/core/utils"
 )
 
-func HeaderHelper(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "Application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
+func GetRequestData(w http.ResponseWriter, r *http.Request) (*models.User, string, string) {
+	utils.HttpHeaderHelper(w)
+
+	store := r.Context().Value("data")
+
+	data := store.(map[string]interface{})
+	user, _ := data["user"].(*models.User)
+	jwt, _ := data["jwt"].(string)
+	claims, _ := data["claims"].(string)
+
+	return user, jwt, claims
 }
 
-func ViewsModifierHelper(w http.ResponseWriter, r *http.Request) []byte {
-	HeaderHelper(w)
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println("Error:", err)
-		HttpJsonError(w, errors.ErrBodyNotValid, http.StatusBadRequest)
-
-		return nil
-	}
-
-	return data
-}
-
-func HttpJsonError(w http.ResponseWriter, err error, code int) {
-	w.WriteHeader(code)
-	HeaderHelper(w)
-	w.Write(errors.Json(err))
-}
-
-func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
-	crsf := r.Header.Get("X-CRSF-TOKEN")
+func GetClaimsAndJwt(w http.ResponseWriter, r *http.Request) (string, string) {
 	token, err := cookies.Get(w, r)
-
-	if crsf == "" {
-		HttpJsonError(w, errors.ErrCrsfMissing, http.StatusNotAcceptable)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
 		return "", ""
 	}
 
-	if token == "" && errors.ErrCookieNotFound != err {
-		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
+	claims, err := tokens.ClaimsFromJwt(token)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
 		return "", ""
 	}
 
-	if token == "" && err != nil {
-		HttpJsonError(w, errors.ErrCookieNotFound, http.StatusNotAcceptable)
-		return "", ""
-	}
-
-	return token, crsf
+	return token, claims.Custom
 }
 
 func Serialize(user *models.User) []byte {
@@ -70,29 +52,20 @@ func Serialize(user *models.User) []byte {
 
 	buser, err := json.Marshal(user)
 	if err != nil {
-		return errors.Json(errors.ErrMalformedInput)
+		return errors.Json(errors.MalformedInput)
 	}
 
 	return buser
 }
 
-func MeErrorCheck(w http.ResponseWriter, err error) {
+func EmailCheck(err error, w http.ResponseWriter, r *http.Request) {
 	switch {
-	case err == errors.ErrDontMatch:
-		HttpJsonError(w, err, http.StatusUnauthorized)
-	case err == errors.ErrUserNotFound:
-		HttpJsonError(w, err, http.StatusBadRequest)
+	case err == errors.UserNotFound:
+		errors.Http(w, err, http.StatusBadRequest)
 	default:
-		HttpJsonError(w, err, http.StatusInternalServerError)
+		errors.Http(w, errors.InternalError, http.StatusInternalServerError)
 	}
-}
 
-func EmailErrorCheck(w http.ResponseWriter, err error) {
-	switch {
-	case err == errors.ErrUserNotFound:
-		HttpJsonError(w, err, http.StatusBadRequest)
-	default:
-		HttpJsonError(w, errors.ErrInternalError, http.StatusInternalServerError)
-	}
+	return
 
 }
