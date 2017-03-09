@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -73,13 +74,13 @@ func (u *Users) Register(data *models.User) error {
 
 	return nil
 }
-func (u *Users) Logout(crsf string) error {
+func (u *Users) Logout(jwt, claims string) error {
 	// do something
 	// add user blacklisting
 	return nil
 }
 
-func (u *Users) Me(crsf string, data *models.User) (*models.User, error) {
+func (u *Users) Me(email string, data *models.User) (*models.User, error) {
 	mng := u.pool.Get()
 	defer u.pool.Put(mng)
 
@@ -92,12 +93,8 @@ func (u *Users) Me(crsf string, data *models.User) (*models.User, error) {
 		return user, nil
 	}
 
-	email, err := utils.ValueFromCrsf(crsf)
-	if err != nil {
-		return nil, err
-	}
-
 	other, err := mng.Get(&models.User{Email: email})
+	log.Println("here I am")
 	if err != nil {
 		return nil, err
 	}

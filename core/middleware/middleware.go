@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
-	"github.com/auth-api/core/utils"
 	"github.com/auth-api/core/views"
 )
 
@@ -47,7 +47,7 @@ func init() {
 	RateLimiter = instance.RateLimit
 }
 
-func ValidJson(next http.Handler) http.Handler {
+func ToJson(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if r.ContentLength == 0 {
@@ -70,33 +70,42 @@ func ValidJson(next http.Handler) http.Handler {
 		}
 		r.Body = ioutil.NopCloser(buf)
 
-		ctx := context.WithValue(r.Context(), "user", user)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(AddToCtx(r.Context(), "user", user)))
 	})
 }
 
-func ValidAuth(next http.Handler) http.Handler {
+func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		cookie, crsf := views.GetCookieAndCrsf(w, r)
-		if cookie == "" || crsf == "" {
+		crsf := r.Header.Get("X-CRSF-TOKEN")
+		if crsf == "" {
+			errors.Http(w, errors.CrsfMissing, http.StatusUnauthorized)
 			return
 		}
 
-		claims, err := utils.ClaimsFromJwt(cookie)
-		if err != nil {
-			errors.Http(w, err, http.StatusUnauthorized)
+		jwt, claims := views.GetClaimsAndJwt(w, r)
+		if jwt == "" || crsf == "" {
 			return
 		}
 
 		if !xsrftoken.Valid(crsf, settings.CRYPTO_SECRET,
-			claims.Custom, settings.CRSF_ACTION_ID) {
+			claims, settings.CRSF_ACTION_ID) {
 			errors.Http(w, errors.DontMatch, http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := AddToCtx(r.Context(), "jwt", jwt)
+		ctx2 := AddToCtx(ctx, "claims", claims)
+
+		next.ServeHTTP(w, r.WithContext(ctx2))
+	})
+}
+
+func AddContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data := make(map[string]interface{}, 3)
+		ctx := context.WithValue(r.Context(), "data", data)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -122,8 +131,7 @@ func Recover(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Println("Panic : %v\n", err)
-				errors.Http(w, errors.InternalError, http.StatusInternalServerError)
+				errors.Http(w, fmt.Errorf("Panic: %v\n", err), http.StatusInternalServerError)
 			}
 		}()
 
@@ -131,4 +139,17 @@ func Recover(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func AddToCtx(c context.Context, k string, v interface{}) context.Context {
+
+	vals := c.Value("data")
+	data, ok := vals.(map[string]interface{})
+	if !ok {
+		return context.WithValue(c, "data", data)
+	}
+
+	data[k] = v
+
+	return context.WithValue(c, "data", data)
 }

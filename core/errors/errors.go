@@ -27,6 +27,7 @@ var NewCipher = New("New cipher erros")
 var NewGCM = New("New GCM crypto failure")
 var TimeOutReq = New("Request timed out")
 var EmailMissing = New("Email is required")
+var PanicInternalError = New("Panic Internal Sever error!")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

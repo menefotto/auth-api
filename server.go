@@ -18,11 +18,13 @@ func main() {
 		middleware.TimeOut, middleware.Logging)
 
 	pubblic_get := base.Append(middleware.Recover)
-	pubblic_post := base.Append(middleware.ValidJson, middleware.Recover)
+	pubblic_post := base.Append(middleware.AddContext,
+		middleware.ToJson, middleware.Recover)
 
-	private_get := base.Append(middleware.ValidAuth, middleware.Recover)
-	private_post := base.Append(middleware.ValidJson,
-		middleware.ValidAuth, middleware.Recover)
+	private_get := base.Append(middleware.AddContext,
+		middleware.Auth, middleware.Recover)
+	private_post := base.Append(middleware.AddContext, middleware.ToJson,
+		middleware.Auth, middleware.Recover)
 
 	p.Handle("/login",
 		pubblic_post.ThenFunc(views.Login)).

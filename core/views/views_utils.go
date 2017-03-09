@@ -12,34 +12,33 @@ import (
 	"github.com/auth-api/core/utils"
 )
 
-func GetRequestData(w http.ResponseWriter, r *http.Request) *models.User {
+func GetRequestData(w http.ResponseWriter, r *http.Request) (*models.User, string, string) {
 	utils.HttpHeaderHelper(w)
 
-	data := r.Context().Value("user")
-	user, ok := data.(*models.User)
-	if !ok {
-		errors.Http(w, errors.BodyNotValid, http.StatusBadRequest)
+	store := r.Context().Value("data")
 
-		return nil
-	}
+	data := store.(map[string]interface{})
+	user, _ := data["user"].(*models.User)
+	jwt, _ := data["jwt"].(string)
+	claims, _ := data["claims"].(string)
 
-	return user
+	return user, jwt, claims
 }
 
-func GetCookieAndCrsf(w http.ResponseWriter, r *http.Request) (string, string) {
-	crsf := r.Header.Get("X-CRSF-TOKEN")
-	if crsf == "" {
-		errors.Http(w, errors.CrsfMissing, http.StatusUnauthorized)
-		return "", ""
-	}
-
+func GetClaimsAndJwt(w http.ResponseWriter, r *http.Request) (string, string) {
 	token, err := cookies.Get(w, r)
 	if err != nil {
 		errors.Http(w, err, http.StatusUnauthorized)
 		return "", ""
 	}
 
-	return token, crsf
+	claims, err := utils.ClaimsFromJwt(token)
+	if err != nil {
+		errors.Http(w, err, http.StatusUnauthorized)
+		return "", ""
+	}
+
+	return token, claims.Custom
 }
 
 func Serialize(user *models.User) []byte {
@@ -58,23 +57,14 @@ func Serialize(user *models.User) []byte {
 	return buser
 }
 
-func MeErrorCheck(w http.ResponseWriter, err error) {
-	switch {
-	case err == errors.DontMatch:
-		errors.Http(w, err, http.StatusUnauthorized)
-	case err == errors.UserNotFound:
-		errors.Http(w, err, http.StatusBadRequest)
-	default:
-		errors.Http(w, err, http.StatusInternalServerError)
-	}
-}
-
-func EmailErrorCheck(w http.ResponseWriter, err error) {
+func EmailCheck(err error, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == errors.UserNotFound:
 		errors.Http(w, err, http.StatusBadRequest)
 	default:
 		errors.Http(w, errors.InternalError, http.StatusInternalServerError)
 	}
+
+	return
 
 }
