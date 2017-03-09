@@ -18,6 +18,7 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/settings"
+	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/views"
 )
 
@@ -94,6 +95,15 @@ func Auth(next http.Handler) http.Handler {
 		}
 
 		// add here code to check whether the token is revoked
+		t1 := time.Now()
+		ok := tokens.BlackList.Valid(jwt)
+		if !ok {
+			errors.Http(w, errors.BlackListed, http.StatusUnauthorized)
+			return
+		}
+		t2 := time.Now()
+		log.Printf("Lookup price [%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+		// token verification done here
 
 		ctx := AddToCtx(r.Context(), "jwt", jwt)
 		ctx2 := AddToCtx(ctx, "claims", claims)

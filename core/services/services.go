@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -75,8 +76,10 @@ func (u *Users) Register(data *models.User) error {
 	return nil
 }
 func (u *Users) Logout(jwt, claims string) error {
-	// do something
-	// add user blacklisting
+	if err := tokens.BlackList.Put(jwt, claims); err != nil {
+		log.Println(err)
+	}
+
 	return nil
 }
 

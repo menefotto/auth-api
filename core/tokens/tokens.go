@@ -76,15 +76,16 @@ func (c *tokenList) Put(key, tok string) error {
 }
 
 // Get give you back the value assumining it hasn't be purged yet
-func (c *tokenList) Valid(key string) (bool, error) {
+func (c *tokenList) Valid(key string) bool {
 	var tok string
 
 	err := c.Db.Get(context.Background(), datastore.NameKey(c.kind, key, nil), &tok)
-	if err != nil {
-		return false, err
+	if err == datastore.ErrNoSuchEntity {
+		return true
 	}
+	// improvement needed here, it should not be better error checks
 
-	return true, nil
+	return false
 }
 
 // Stop Must be called otherwise the cache will leak
