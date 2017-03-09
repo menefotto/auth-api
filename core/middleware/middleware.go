@@ -77,6 +77,7 @@ func ToJson(next http.Handler) http.Handler {
 
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		crsf := r.Header.Get("X-CRSF-TOKEN")
 		if crsf == "" {
 			errors.Http(w, errors.CrsfMissing, http.StatusUnauthorized)
@@ -102,6 +103,8 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 		t2 := time.Now()
+
+		// lookup timing
 		log.Printf("Lookup price [%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 		// token verification done here
 
@@ -135,6 +138,7 @@ func Logging(next http.Handler) http.Handler {
 		t1 := time.Now()
 		next.ServeHTTP(w, r)
 		t2 := time.Now()
+
 		log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 	})
 }

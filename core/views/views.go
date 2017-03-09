@@ -35,7 +35,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	_, jwt, claims := GetRequestData(w, r)
-
 	err := service.Logout(jwt, claims)
 	if err != nil {
 		errors.Http(w, err, http.StatusUnauthorized)

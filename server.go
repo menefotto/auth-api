@@ -11,27 +11,32 @@ import (
 )
 
 func main() {
-	r := mux.NewRouter()
-	p := r.PathPrefix("/api/v1").Subrouter()
-
 	base := alice.New(middleware.RateLimiter,
 		middleware.TimeOut, middleware.Logging)
 
 	pubblic_get := base.Append(middleware.Recover)
+
 	pubblic_post := base.Append(middleware.AddContext,
 		middleware.ToJson, middleware.Recover)
 
 	private_get := base.Append(middleware.AddContext,
 		middleware.Auth, middleware.Recover)
+
 	private_post := base.Append(middleware.AddContext, middleware.ToJson,
 		middleware.Auth, middleware.Recover)
+
+	private_post_empty := base.Append(middleware.AddContext,
+		middleware.Auth, middleware.Recover)
+
+	r := mux.NewRouter()
+	p := r.PathPrefix("/api/v1").Subrouter()
 
 	p.Handle("/login",
 		pubblic_post.ThenFunc(views.Login)).
 		Methods("POST").Name("login")
 
 	p.Handle("/logout",
-		private_post.ThenFunc(views.Logout)).
+		private_post_empty.ThenFunc(views.Logout)).
 		Methods("POST").Name("logout")
 
 	p.Handle("/users/me",

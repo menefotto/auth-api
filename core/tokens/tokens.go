@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/json"
+	"log"
 	"time"
 
 	"google.golang.org/api/iterator"
@@ -22,10 +23,11 @@ var BlackList *tokenList
 
 func init() {
 	var err error
-	BlackList, err = new(settings.BLACK_LIST_INTERVAL, "Revoked")
+	BlackList, err = new(settings.BLACK_LIST_INTERVAL, "Revoked Tokens")
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 type tokenList struct {
@@ -33,6 +35,10 @@ type tokenList struct {
 	tick *time.Ticker
 	done chan bool
 	kind string
+}
+
+type tokenElem struct {
+	Token string
 }
 
 // new creates a new cache with minutes, which rappresent a interval at which
@@ -57,11 +63,11 @@ func new(minutes time.Duration, kind string) (*tokenList, error) {
 	return list, nil
 }
 
-// Put adds a valus to the cache
-func (c *tokenList) Put(key, tok string) error {
+// Put adds a values to the black list
+func (c *tokenList) Put(jwt, claims string) error {
 	_, err := c.Db.RunInTransaction(context.Background(),
 		func(tx *datastore.Transaction) error {
-			_, err := tx.Put(datastore.NameKey(c.kind, key, nil), tok)
+			_, err := tx.Put(datastore.NameKey(c.kind, jwt, nil), &tokenElem{claims})
 			if err != nil {
 				return err
 			}
@@ -77,14 +83,14 @@ func (c *tokenList) Put(key, tok string) error {
 
 // Get give you back the value assumining it hasn't be purged yet
 func (c *tokenList) Valid(key string) bool {
-	var tok string
+	tok := &tokenElem{}
 
-	err := c.Db.Get(context.Background(), datastore.NameKey(c.kind, key, nil), &tok)
+	err := c.Db.Get(context.Background(), datastore.NameKey(c.kind, key, nil), tok)
 	if err == datastore.ErrNoSuchEntity {
 		return true
 	}
+	log.Println("Token: ", tok)
 	// improvement needed here, it should not be better error checks
-
 	return false
 }
 
@@ -111,8 +117,8 @@ func (c *tokenList) purger() {
 func (c *tokenList) cleaner() {
 	iter := c.Db.Run(context.Background(), datastore.NewQuery("Revoked"))
 	for {
-		var jwt string
-		key, err := iter.Next(&jwt)
+		jwt := &tokenElem{}
+		key, err := iter.Next(jwt)
 		if err == iterator.Done {
 			break
 		}
@@ -121,7 +127,7 @@ func (c *tokenList) cleaner() {
 			// log or do something
 		}
 
-		_, err = ClaimsFromJwt(jwt)
+		_, err = ClaimsFromJwt(jwt.Token)
 		// verify proper error handling -- check docks
 		if err == errors.NotValid {
 			c.Db.Delete(context.Background(), key)

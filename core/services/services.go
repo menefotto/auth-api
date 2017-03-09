@@ -75,9 +75,10 @@ func (u *Users) Register(data *models.User) error {
 
 	return nil
 }
+
 func (u *Users) Logout(jwt, claims string) error {
 	if err := tokens.BlackList.Put(jwt, claims); err != nil {
-		log.Println(err)
+		log.Println("Logout error: ", err)
 	}
 
 	return nil
