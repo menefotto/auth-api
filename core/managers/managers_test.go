@@ -62,7 +62,7 @@ func TestBuildGetCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	uNew3, err := manager.Get("carlo@email.com")
+	uNew3, err := manager.Get(&models.User{Email: "carlo@email.com"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestUpdate(t *testing.T) {
 	mapped["Email"] = "carlo@email.com"
 	mapped["Username"] = "wind1985"
 
-	u2, err := manager.Update(mapped)
+	u2, err := manager.Update(&models.User{Email: "carlo@email.com", Username: "wind1985"})
 	if err != nil {
 		t.Fatal(err)
 	}

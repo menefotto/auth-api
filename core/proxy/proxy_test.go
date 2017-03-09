@@ -45,7 +45,7 @@ func TestGet(t *testing.T) {
 	b := &models.User{Email: "carlo@email.com"}
 
 	userapi := New()
-	buser, _, _ := userapi.Get(b)
+	buser, _ := userapi.Get(b)
 
 	if b.Email != buser.Email {
 		t.Fatal("Something is wrong!")

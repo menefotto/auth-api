@@ -57,16 +57,22 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 }
 
 func (u *Users) Update(newUser *models.User) (*models.User, error) {
-
+	_,err := u.store.Backend().RunInTransaction(context.Background(),func(tx *datastore.Transaction) error {
 	oldUser, err := u.store.Get(newUser.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := u.updateFields(newUser, oldUser); err != nil {
+	u.updateFields(newUser, oldUser)
+
+	if err := u.store.Put(oldUser.Email, oldUser); err != nil {
 		return nil, err
 	}
+	if err != nil {
+		// to stuff
+	}
 
+}
 	return oldUser, nil
 }
 
@@ -79,7 +85,7 @@ func (u *Users) Get(user *models.User) (*models.User, error) {
 	return user, nil
 }
 
-func (u *Users) updateFields(new, old *models.User) error {
+func (u *Users) updateFields(new, old *models.User) {
 
 	switch {
 	case new.Username != "" && new.Username != old.Username:
@@ -105,11 +111,6 @@ func (u *Users) updateFields(new, old *models.User) error {
 
 	}
 
-	if err := u.store.Put(old.Email, old); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (u *Users) Verify(user *models.User, settings []string) error {

@@ -46,7 +46,7 @@ func (d *Datastore) Open(projectID, kind string) error {
 func (d *Datastore) Get(key string) (*models.User, error) {
 	user := &models.User{}
 
-	err := d.db.Get(context.Background(), d.newKey(key), user)
+	err := d.db.Get(context.Background(), d.NewKey(key), user)
 	if err != nil {
 		return nil, ErrKeyNotFound
 	}
@@ -56,17 +56,23 @@ func (d *Datastore) Get(key string) (*models.User, error) {
 
 // Put keys inside as the name suggest
 func (d *Datastore) Put(key string, value *models.User) error {
-	_, err := d.db.Put(context.Background(), d.newKey(key), value)
-	if err != nil {
-		return err
-	}
+	_, err := d.db.RunInTransaction(context.Background(),
+		func(tx *datastore.Transaction) error {
+			if _, err := tx.Put(d.NewKey(key), value); err != nil {
+				return err
+			}
 
-	return nil
+			return nil
+		})
+
+	// maybe do something here
+
+	return err
 }
 
 // Del delete keys
 func (d *Datastore) Del(key string) error {
-	err := d.db.Delete(context.Background(), d.newKey(key))
+	err := d.db.Delete(context.Background(), d.NewKey(key))
 	if err != nil {
 		return ErrCantDelete
 	}
@@ -84,6 +90,6 @@ func (d *Datastore) Close() {
 	d.db.Close()
 }
 
-func (d *Datastore) newKey(id string) *datastore.Key {
+func (d *Datastore) NewKey(id string) *datastore.Key {
 	return datastore.NameKey(d.kind, id, nil)
 }

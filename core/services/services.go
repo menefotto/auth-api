@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -94,7 +93,6 @@ func (u *Users) Me(email string, data *models.User) (*models.User, error) {
 	}
 
 	other, err := mng.Get(&models.User{Email: email})
-	log.Println("here I am")
 	if err != nil {
 		return nil, err
 	}

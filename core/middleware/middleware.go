@@ -93,6 +93,8 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
+		// add here code to check whether the token is revoked
+
 		ctx := AddToCtx(r.Context(), "jwt", jwt)
 		ctx2 := AddToCtx(ctx, "claims", claims)
 
