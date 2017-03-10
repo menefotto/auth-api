@@ -8,9 +8,9 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/utils"
+	"github.com/spf13/viper"
 )
 
 func GetRequestData(w http.ResponseWriter, r *http.Request) (*models.User, string, string) {
@@ -43,10 +43,10 @@ func GetClaimsAndJwt(w http.ResponseWriter, r *http.Request) (string, string) {
 }
 
 func Serialize(user *models.User) []byte {
-	for field, value := range settings.OBFUSCATED_FIELDS {
+	for field, value := range viper.GetStringMapString("required_user_fields.obfuscated") {
 		err := managers.SetField(user, field, value)
 		if err != nil {
-			return []byte("")
+			return nil
 		}
 	}
 

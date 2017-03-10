@@ -10,9 +10,9 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/proxy"
-	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/utils"
+	"github.com/spf13/viper"
 	"github.com/tcache"
 )
 
@@ -50,7 +50,7 @@ func (u *Users) Login(email, password string) (string, []byte, error) {
 
 	return tokens.GenerateJwt(
 		[]byte(user.Email),
-		settings.JWT_LOGIN_DELTA,
+		viper.GetInt("jwt_delta.delta"),
 	), csrf, nil
 }
 
@@ -157,7 +157,7 @@ func (u *Users) ActivationConfirm(data []byte) error {
 
 func (u *Users) PasswordReset(data *models.User) error {
 
-	code := tokens.GenerateJwt(nil, settings.JWT_PASSWORD_DELTA)
+	code := tokens.GenerateJwt(nil, viper.GetInt("jwt_delta.password"))
 
 	u.cache.Put(code, data)
 

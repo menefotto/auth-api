@@ -2,8 +2,6 @@ package tokens
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha512"
 	"encoding/json"
 	"time"
 
@@ -12,9 +10,9 @@ import (
 	"cloud.google.com/go/datastore"
 
 	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/utils"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/spf13/viper"
 	"golang.org/x/net/xsrftoken"
 )
 
@@ -22,7 +20,7 @@ var BlackList *tokenList
 
 func init() {
 	var err error
-	BlackList, err = new(settings.BLACK_LIST_INTERVAL, "Revoked Tokens")
+	BlackList, err = new(3, "Revoked Tokens")
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +50,7 @@ func new(minutes time.Duration, kind string) (*tokenList, error) {
 	}
 
 	var err error
-	list.Db, err = datastore.NewClient(context.Background(), settings.PROJECTID)
+	list.Db, err = datastore.NewClient(context.Background(), "boardsandwater")
 	if err != nil {
 		return nil, err
 	}
@@ -184,21 +182,15 @@ func ClaimsFromJwt(tok string) (*customClaims, error) {
 	return claims, nil
 }
 
-func computeHmac() []byte {
-	h := hmac.New(sha512.New, []byte(settings.HMAC_SECRET))
-
-	return h.Sum(nil)
-}
-
 type CrsfToken struct {
 	Token string `json:"crsf"`
 }
 
 func GenerateCrsf(email string) ([]byte, error) {
 	payload := xsrftoken.Generate(
-		settings.CRYPTO_SECRET,
+		viper.GetString("crypto.secret"),
 		email,
-		settings.CRSF_ACTION_ID,
+		viper.GetString("crypto.crsf_action_id"),
 	)
 	csrf, err := json.Marshal(&CrsfToken{payload})
 	if err != nil {

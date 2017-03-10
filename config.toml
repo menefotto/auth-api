@@ -1,0 +1,42 @@
+[project]
+name = "boardsandwater website" #reload
+id = "boardsandwater" 
+
+[host]
+port = ":8080"
+address = "127.0.0.1"
+protocol = "http://"
+
+[api]
+prefix = "/api/v1"
+
+[email]
+password = "Stovari1985"
+sender = "locci.carlo.85@gmail.com"
+smtp = "smtp.gmail.com"
+port = 587
+template_dir = "templates/emails"
+
+[rate_limits]
+request = 20 # request par minute
+burst = 10 # request par minute
+time_out = 5 #seconds time.Duration
+
+[crypto]
+secret = "AES256Key-32Characters1234567890"
+nonce = "bb8ef84243d2ee95a41c6c57"
+crsf_action_id = ""
+
+[jwt_delta]
+login = 3
+activation = 168
+password = 12
+
+[required_user_fields]
+create = ["Email","Password"]
+update = ["Email"]
+get = ["Email"]
+obfuscated = ["Password"]
+
+[black_list]
+interval = 3

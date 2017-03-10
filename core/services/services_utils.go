@@ -2,9 +2,9 @@ package services
 
 import (
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 )
 
 func GenConfirmationUrl(user *models.User, part, code string) string {
-	return settings.API_URL + part + "/" + code
+	return viper.GetString("api.url") + part + "/" + code
 }

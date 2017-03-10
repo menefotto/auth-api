@@ -13,8 +13,7 @@ import (
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/tokens"
 	"github.com/pborman/uuid"
-
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 )
 
 type Users struct {
@@ -24,7 +23,7 @@ type Users struct {
 func New(kind string) *Users {
 	db := &google.Datastore{}
 
-	err := db.Open(settings.PROJECTID, kind)
+	err := db.Open("boardsandwater", kind)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +45,7 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
 	user.Code = tokens.GenerateJwt(
 		[]byte(user.Email),
-		settings.JWT_ACTIVATION_DELTA,
+		viper.GetInt("jwt_delta.activation"),
 	)
 
 	if err := u.store.Put(user.Email, user); err != nil {
