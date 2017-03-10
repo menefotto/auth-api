@@ -12,6 +12,7 @@ import (
 	_ "github.com/auth-api/core/config"
 	"github.com/auth-api/core/middleware"
 	"github.com/auth-api/core/views"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/spf13/viper"
@@ -85,6 +86,13 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		if e.Op.String() == "WRITE" {
+			ShutdownOrReload(s, "Reloading, server conf changed!", main)
+		}
+	})
+
 	go func() {
 		log.Println("Starting server!")
 		err := s.ListenAndServe()
@@ -96,17 +104,19 @@ func main() {
 	sig := <-sigs
 	switch {
 	case sig == syscall.SIGINT || sig == syscall.SIGTERM:
-		ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-		if err := s.Shutdown(ctx); err != nil {
-			log.Println("Shutting down error :", err)
-		}
+		ShutdownOrReload(s, "Shutting down server", func() {})
 	case sig == syscall.SIGHUP:
-		ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-		if err := s.Shutdown(ctx); err != nil {
-			log.Println("Shutting down error :", err)
-		}
+		ShutdownOrReload(s, "Shutting down server", main)
+	}
+}
 
+func ShutdownOrReload(srv *http.Server, msg string, fn func()) {
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Println("Shutting down error :", err)
 	}
 
-	log.Println("Shutting down server!")
+	log.Println(msg)
+
+	fn()
 }

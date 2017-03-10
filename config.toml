@@ -1,6 +1,6 @@
 [project]
-name = "boardsandwater website"
-id = "boardsandwater"
+name = "boardsandwater website" #reload
+id = "boardsandwater" 
 
 [host]
 port = ":8080"
@@ -39,4 +39,4 @@ get = ["Email"]
 obfuscated = ["Password"]
 
 [black_list]
-interval = 3 #minutes time.Duration
+interval = 3
