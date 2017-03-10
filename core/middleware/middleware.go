@@ -22,9 +22,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var RateLimiter func(h http.Handler) http.Handler
-
-func init() {
+func NewRateLimiter() func(h http.Handler) http.Handler {
 	store, err := memstore.New(65536)
 	if err != nil {
 		panic(err)
@@ -45,7 +43,7 @@ func init() {
 		VaryBy:      &throttled.VaryBy{Path: true, RemoteAddr: true},
 	}
 
-	RateLimiter = instance.RateLimit
+	return instance.RateLimit
 }
 
 func ToJson(next http.Handler) http.Handler {

@@ -46,7 +46,7 @@ func Serialize(user *models.User) []byte {
 	for field, value := range viper.GetStringMapString("required_user_fields.obfuscated") {
 		err := managers.SetField(user, field, value)
 		if err != nil {
-			return []byte("")
+			return nil
 		}
 	}
 

@@ -7,10 +7,10 @@ import (
 )
 
 func init() {
-	path := "../../config.toml"
+	path := "/home/wind85/Documents/go/src/github.com/auth-api/"
 
-	viper.SetConfigName("config")
 	viper.AddConfigPath(path)
+	viper.SetConfigName("config")
 
 	viper.SetDefault("required_user_fields.obfuscated",
 		map[string]string{"Password": "-", "Uuid": "-", "Datajoined": "-"})
@@ -19,4 +19,5 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }

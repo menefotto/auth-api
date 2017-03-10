@@ -23,7 +23,7 @@ type Users struct {
 func New(kind string) *Users {
 	db := &google.Datastore{}
 
-	err := db.Open(viper.GetString("project.id"), kind)
+	err := db.Open("boardsandwater", kind)
 	if err != nil {
 		panic(err)
 	}

@@ -20,9 +20,7 @@ var BlackList *tokenList
 
 func init() {
 	var err error
-	BlackList, err = new(viper.GetDuration("black_list.interval"),
-		"Revoked Tokens",
-	)
+	BlackList, err = new(3, "Revoked Tokens")
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +50,7 @@ func new(minutes time.Duration, kind string) (*tokenList, error) {
 	}
 
 	var err error
-	list.Db, err = datastore.NewClient(context.Background(), viper.GetString("project.id"))
+	list.Db, err = datastore.NewClient(context.Background(), "boardsandwater")
 	if err != nil {
 		return nil, err
 	}
