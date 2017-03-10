@@ -7,7 +7,7 @@ import (
 	"net/smtp"
 	"path/filepath"
 
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 )
 
 type Email struct {
@@ -18,20 +18,20 @@ type Email struct {
 func SendEmail(sendto []string, msg *Email, templname string) error {
 	auth := smtp.PlainAuth(
 		"",
-		settings.EMAIL_SENDER,
-		settings.EMAIL_PASSWORD,
-		settings.EMAIL_SMTP,
+		viper.GetString("email.sender"),
+		viper.GetString("email.password"),
+		viper.GetString("smtp"),
 	)
 
-	body, err := RenderEmail(msg, templname, settings.EMAIL_SENDER, sendto)
+	body, err := RenderEmail(msg, templname, viper.GetString("email.sender"), sendto)
 	if err != nil {
 		return err
 	}
 
 	err = smtp.SendMail(
-		settings.EMAIL_SMTP+":"+settings.EMAIL_PORT,
+		viper.GetString("email.smtp")+viper.GetString("email.port"),
 		auth,
-		settings.EMAIL_SENDER,
+		viper.GetString("email.sender"),
 		sendto,
 		body,
 	)
@@ -48,9 +48,9 @@ func RenderEmail(msg *Email, templname, from string, sendto []string) ([]byte, e
 	send := "From: " + from + "\r\n"
 	recv := "To: " + sendto[0] + "\r\n"
 	mime := "MIME-version: 1.0\r\nContent-Type: text/html\r\n"
-	subj := "Subject: " + settings.PROJECTID + ": " + msg.Title + "\r\n\r\n"
+	subj := "Subject: " + viper.GetString("project.id") + ": " + msg.Title + "\r\n\r\n"
 
-	path := filepath.Join(settings.EMAIL_TEMPLATE_DIR, templname+".tmpl")
+	path := filepath.Join(viper.GetString("email.template_dir"), templname+".tmpl")
 	tmpl := template.Must(template.ParseFiles(path))
 
 	buff := &bytes.Buffer{}

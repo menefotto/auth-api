@@ -4,7 +4,7 @@ import (
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/managers"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 )
 
 type UsersVerifier struct {
@@ -16,7 +16,7 @@ func New() *UsersVerifier {
 }
 
 func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, settings.CREATE_USER_FIELD_REQUIRED)
+	err := j.mng.Verify(user, viper.GetStringSlice("required_user_field.required"))
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (j *UsersVerifier) Get(user *models.User) (*models.User, error) {
 }
 
 func (j *UsersVerifier) Update(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, settings.UPDATE_USER_FIELD_REQUIRED)
+	err := j.mng.Verify(user, viper.GetStringSlice("required_user_field.update"))
 	if err != nil {
 		return nil, err
 	}

@@ -17,9 +17,9 @@ import (
 
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/settings"
 	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/views"
+	"github.com/spf13/viper"
 )
 
 var RateLimiter func(h http.Handler) http.Handler
@@ -31,8 +31,8 @@ func init() {
 	}
 
 	quota := throttled.RateQuota{
-		throttled.PerMin(settings.RATE_LIMIT_REQS),
-		settings.RATE_LIMIT_BURST,
+		throttled.PerMin(viper.GetInt("rate_limits.request")),
+		viper.GetInt("rate_limits.burst"),
 	}
 
 	rateLimiter, err := throttled.NewGCRARateLimiter(store, quota)
@@ -89,8 +89,8 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		if !xsrftoken.Valid(crsf, settings.CRYPTO_SECRET,
-			claims, settings.CRSF_ACTION_ID) {
+		if !xsrftoken.Valid(crsf, viper.GetString("crypto.secret"),
+			claims, viper.GetString("crypto.crsf_action_id")) {
 			errors.Http(w, errors.DontMatch, http.StatusUnauthorized)
 			return
 		}
@@ -127,7 +127,7 @@ func AddContext(next http.Handler) http.Handler {
 func TimeOut(next http.Handler) http.Handler {
 	return http.TimeoutHandler(
 		next,
-		settings.REQ_TIME_OUT*time.Second,
+		viper.GetDuration("rate_limits.time_out")*time.Second,
 		string(errors.Json(errors.TimeOutReq)),
 	)
 }

@@ -9,14 +9,14 @@ import (
 	"io"
 
 	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func Encrypt(data string) (string, error) {
-	nonce, _ := hex.DecodeString(settings.NONCE)
+	nonce, _ := hex.DecodeString(viper.GetString("crypto.nonce"))
 
-	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
+	block, err := aes.NewCipher([]byte(viper.GetString("crypto.secret")))
 	if err != nil {
 		return "", errors.NewCipher
 	}
@@ -30,10 +30,10 @@ func Encrypt(data string) (string, error) {
 }
 
 func Decrypt(data string) (string, error) {
-	nonce, _ := hex.DecodeString(settings.NONCE)
+	nonce, _ := hex.DecodeString(viper.GetString("crypto.nonce"))
 	text, _ := hex.DecodeString(data)
 
-	block, err := aes.NewCipher([]byte(settings.CRYPTO_SECRET))
+	block, err := aes.NewCipher([]byte(viper.GetString("crypto.secret")))
 	if err != nil {
 		return "", errors.NewCipher
 	}
