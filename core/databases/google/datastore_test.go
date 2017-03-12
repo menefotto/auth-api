@@ -1,4 +1,4 @@
-package google
+package datastore
 
 import (
 	"testing"
