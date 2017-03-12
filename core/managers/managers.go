@@ -32,6 +32,10 @@ func New(kind string) *Users {
 }
 
 func (u *Users) Create(user *models.User) (*models.User, error) {
+	if len(user.Password) < 8 {
+		return nil, errors.PasswordTooShort
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 	if err != nil {
 		return nil, err

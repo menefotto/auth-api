@@ -104,9 +104,9 @@ func main() {
 	sig := <-sigs
 	switch {
 	case sig == syscall.SIGINT || sig == syscall.SIGTERM:
-		ShutdownOrReload(s, "Shutting down server", func() {})
+		ShutdownOrReload(s, "Shutting down server!", func() {})
 	case sig == syscall.SIGHUP:
-		ShutdownOrReload(s, "Shutting down server", main)
+		ShutdownOrReload(s, "Rebooting server!", main)
 	}
 }
 
