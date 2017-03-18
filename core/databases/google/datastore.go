@@ -1,4 +1,4 @@
-package datastore
+package google
 
 import (
 	"errors"
@@ -87,7 +87,9 @@ func (d *Datastore) Backend() *datastore.Client {
 
 // Close always returns
 func (d *Datastore) Close() {
-	d.db.Close()
+	if d.db != nil {
+		d.db.Close()
+	}
 }
 
 func (d *Datastore) NewKey(id string) *datastore.Key {

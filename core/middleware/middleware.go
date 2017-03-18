@@ -96,14 +96,15 @@ func Auth(next http.Handler) http.Handler {
 		// add here code to check whether the token is revoked
 		t1 := time.Now()
 		ok := tokens.BlackList.Valid(jwt)
+		t2 := time.Now()
+		log.Printf("[%s BlakList Lookup Price ] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+
 		if !ok {
 			errors.Http(w, errors.BlackListed, http.StatusUnauthorized)
 			return
 		}
-		t2 := time.Now()
 
 		// lookup timing
-		log.Printf("[%s BlakList Lookup Price ] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 		// token verification done here
 
 		ctx := AddToCtx(r.Context(), "jwt", jwt)

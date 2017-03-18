@@ -8,8 +8,10 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/auth-api/core/databases"
+	"github.com/auth-api/core/databases/amazon"
+	"github.com/auth-api/core/databases/google"
 	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/google"
 	"github.com/auth-api/core/models"
 	"github.com/auth-api/core/tokens"
 	"github.com/pborman/uuid"
@@ -17,11 +19,18 @@ import (
 )
 
 type Users struct {
-	store *google.Datastore
+	store databases.Db
 }
 
-func New(kind string) *Users {
-	db := &google.Datastore{}
+func New(kind, backend string) *Users {
+	var db databases.Db
+
+	switch {
+	case backend == "DYNAMO":
+		db = &amazon.Dynamo{}
+	case backend == "DATASTORE":
+		db = &google.Datastore{}
+	}
 
 	err := db.Open("boardsandwater", kind)
 	if err != nil {

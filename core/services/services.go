@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"log"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -13,18 +12,15 @@ import (
 	"github.com/auth-api/core/tokens"
 	"github.com/auth-api/core/utils"
 	"github.com/spf13/viper"
-	"github.com/tcache"
 )
 
 type Users struct {
-	pool  *proxy.Pool
-	cache *tcache.Cache
+	pool *proxy.Pool
 }
 
 func New(poolsize int) *Users {
 	return &Users{
 		proxy.NewPool(poolsize),
-		tcache.New(time.Minute*8, time.Hour*12),
 	}
 }
 
@@ -159,7 +155,7 @@ func (u *Users) PasswordReset(data *models.User) error {
 
 	code := tokens.GenerateJwt(nil, viper.GetInt("jwt_delta.password"))
 
-	u.cache.Put(code, data)
+	//u.cache.Put(code, data)
 
 	err := u.sendConfirmEmail(
 		data.Email,
@@ -181,18 +177,19 @@ type passwordReset struct {
 }
 
 func (u *Users) PasswordResetConfirm(data []byte) error {
-	value, ok := u.cache.Get(string(data))
-	if !ok {
-		return errors.UserNotFound
-	}
+	//value, ok := u.cache.Get(string(data))
+	//if !ok {
+	//		return errors.UserNotFound
+	//	}
 
-	code, ok := value.([]byte)
-	if !ok {
-		return errors.NotValid
-	}
+	//code, ok := value.([]byte)
+	//if !ok {
+	//		return errors.NotValid
+	//	}
 
 	content := &passwordReset{}
-	err := json.Unmarshal(code, content)
+	// byte placeholder till I moved it to use another blacklist
+	err := json.Unmarshal([]byte(""), content)
 	if err != nil {
 		return errors.JsonPayload
 	}

@@ -32,7 +32,7 @@ login = 3
 activation = 168
 password = 12
 
-[required_user_fields]
+[required_fields]
 create = ["Email","Password"]
 update = ["Email"]
 get = ["Email"]

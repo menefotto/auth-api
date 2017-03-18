@@ -1,4 +1,4 @@
-package dynamo
+package amazon
 
 import (
 	"testing"
@@ -49,4 +49,7 @@ func TestDel(t *testing.T) {
 	if err != nil {
 		t.Fatal("Delete error: ", err)
 	}
+}
+
+func TestSatisfyInterface(t *testing.T) {
 }

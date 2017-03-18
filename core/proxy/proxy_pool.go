@@ -10,7 +10,7 @@ func NewPool(size int) *Pool {
 	p := &Pool{make(map[*UsersVerifier]*int, size)}
 
 	for i := 0; i < size; i++ {
-		u := New()
+		u := New("DATASTORE")
 		n := rand.Int()
 		p.Connections[u] = &n
 	}

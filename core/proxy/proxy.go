@@ -11,8 +11,8 @@ type UsersVerifier struct {
 	mng *managers.Users
 }
 
-func New() *UsersVerifier {
-	return &UsersVerifier{managers.New("Users")}
+func New(dbtype string) *UsersVerifier {
+	return &UsersVerifier{managers.New("Users", dbtype)}
 }
 
 func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {

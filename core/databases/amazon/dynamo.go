@@ -1,4 +1,4 @@
-package dynamo
+package amazon
 
 import (
 	"fmt"

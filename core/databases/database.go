@@ -1,6 +1,6 @@
-package google
+package databases
 
-import "github.com/api.jwt.auth/core/models"
+import "github.com/auth-api/core/models"
 
 // Db interface implemented by clients
 type Db interface {

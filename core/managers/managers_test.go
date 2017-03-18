@@ -3,11 +3,12 @@ package managers
 import (
 	"testing"
 
+	_ "github.com/auth-api/core/config"
 	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/settings"
+	"github.com/spf13/viper"
 )
 
-var manager = New("Users")
+var manager = New("Users", "DATASTORE")
 
 func TestVerify(t *testing.T) {
 
@@ -16,8 +17,7 @@ func TestVerify(t *testing.T) {
 		Password: "1234",
 		Email:    "carlo@email.com",
 	}
-
-	if err := manager.Verify(u, settings.CREATE_USER_FIELD_REQUIRED); err != nil {
+	if err := manager.Verify(u, viper.GetStringSlice("required_user_fields.create")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -26,7 +26,7 @@ func TestVerify(t *testing.T) {
 		Email:    "carlo@email.com",
 	}
 
-	if err := manager.Verify(u2, settings.CREATE_USER_FIELD_REQUIRED); err == nil {
+	if err := manager.Verify(u2, viper.GetStringSlice("required_fields.create")); err == nil {
 		t.Fatal("should not pass verification")
 	}
 
@@ -36,7 +36,7 @@ func TestVerify(t *testing.T) {
 		Email:    "carlo@email.com",
 	}
 
-	err := manager.Verify(u3, settings.UPDATE_USER_FIELD_REQUIRED)
+	err := manager.Verify(u3, viper.GetStringSlice("required_fields.update"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestVerify(t *testing.T) {
 		Username: "wind85",
 	}
 
-	if err := manager.Verify(u4, settings.UPDATE_USER_FIELD_REQUIRED); err == nil {
+	if err := manager.Verify(u4, viper.GetStringSlice("required_fields.update")); err == nil {
 		t.Fatal("should not pass verification")
 	}
 }
@@ -53,7 +53,7 @@ func TestVerify(t *testing.T) {
 func TestBuildGetCreate(t *testing.T) {
 	u := &models.User{
 		Username: "wind85",
-		Password: "1234",
+		Password: "12345678",
 		Email:    "carlo@email.com",
 	}
 
