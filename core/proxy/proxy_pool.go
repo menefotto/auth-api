@@ -3,14 +3,14 @@ package proxy
 import "math/rand"
 
 type Pool struct {
-	Connections map[*UsersVerifier]*int
+	Connections map[*Users]*int
 }
 
 func NewPool(size int) *Pool {
-	p := &Pool{make(map[*UsersVerifier]*int, size)}
+	p := &Pool{make(map[*Users]*int, size)}
 
 	for i := 0; i < size; i++ {
-		u := New("DATASTORE")
+		u := New()
 		n := rand.Int()
 		p.Connections[u] = &n
 	}
@@ -18,7 +18,7 @@ func NewPool(size int) *Pool {
 	return p
 }
 
-func (p *Pool) Get() *UsersVerifier {
+func (p *Pool) Get() *Users {
 
 	for k, v := range p.Connections {
 		if *v != 0 {
@@ -31,7 +31,7 @@ func (p *Pool) Get() *UsersVerifier {
 	return nil
 }
 
-func (p *Pool) Put(u *UsersVerifier) {
+func (p *Pool) Put(u *Users) {
 
 	for _, v := range p.Connections {
 		if *v == 0 {

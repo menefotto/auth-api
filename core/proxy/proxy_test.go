@@ -3,8 +3,7 @@ package proxy
 import (
 	"testing"
 
-	"golang.org/x/crypto/bcrypt"
-
+	_ "github.com/auth-api/core/config"
 	"github.com/auth-api/core/errors"
 	"github.com/auth-api/core/models"
 )
@@ -17,26 +16,33 @@ func TestApiError(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	u := &models.User{Username: "wind85", Email: "carlo@email.com", Password: "1234"}
+	u := &models.User{
+		Username: "wind85",
+		Email:    "carlo@email.com",
+		Password: "12345678",
+	}
 
 	userapi := New()
-	buser, _ := userapi.Create(u)
-	user := &models.User{}
+	buser, err := userapi.Create(u)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if user.Username != buser.Username {
+	if u.Username != buser.Username {
 		t.Fatal("Something is wrong!")
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	hash, _ := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.MinCost)
-
-	u := &models.User{Username: "wind85", Email: "carlo@email.com", Password: "12345678"}
+	u := &models.User{Username: "carlo85", Email: "carlo@email.com", Password: "12345678"}
 
 	userapi := New()
-	buser, _ := userapi.Update(u)
+	buser, err := userapi.Update(u)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	if string(hash) != buser.Username {
+	if u.Username != buser.Username {
 		t.Fatal("Something is wrong!")
 	}
 }
@@ -45,7 +51,10 @@ func TestGet(t *testing.T) {
 	b := &models.User{Email: "carlo@email.com"}
 
 	userapi := New()
-	buser, _ := userapi.Get(b)
+	buser, err := userapi.Get(b)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if b.Email != buser.Email {
 		t.Fatal("Something is wrong!")

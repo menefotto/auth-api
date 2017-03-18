@@ -148,7 +148,7 @@ func SetField(user *models.User, field string, value interface{}) error {
 
 	switch {
 	case fieldname == "Datejoined" || fieldname == "Uuid":
-		return nil
+		return errors.New("Field: [" + field + "] must not change")
 	default:
 		s, ok := value.(string)
 		if !ok {

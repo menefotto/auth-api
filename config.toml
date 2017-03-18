@@ -40,3 +40,6 @@ obfuscated = ["Password"]
 
 [black_list]
 interval = 3
+
+[database]
+backend = "DATASTORE"

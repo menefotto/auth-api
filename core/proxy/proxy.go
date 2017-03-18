@@ -7,16 +7,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-type UsersVerifier struct {
+type Users struct {
 	mng *managers.Users
 }
 
-func New(dbtype string) *UsersVerifier {
-	return &UsersVerifier{managers.New("Users", dbtype)}
+func New() *Users {
+	return &Users{
+		managers.New(
+			"Users",
+			viper.GetString("database.backend"),
+		),
+	}
 }
 
-func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, viper.GetStringSlice("required_user_field.required"))
+func (j *Users) Create(user *models.User) (*models.User, error) {
+	err := j.mng.Verify(user, viper.GetStringSlice("required_fields.create"))
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +34,7 @@ func (j *UsersVerifier) Create(user *models.User) (*models.User, error) {
 	return newuser, nil
 }
 
-func (j *UsersVerifier) Get(user *models.User) (*models.User, error) {
+func (j *Users) Get(user *models.User) (*models.User, error) {
 	if user.Email == "" {
 		return nil, errors.EmailMissing
 	}
@@ -42,8 +47,8 @@ func (j *UsersVerifier) Get(user *models.User) (*models.User, error) {
 	return gotUser, nil
 }
 
-func (j *UsersVerifier) Update(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, viper.GetStringSlice("required_user_field.update"))
+func (j *Users) Update(user *models.User) (*models.User, error) {
+	err := j.mng.Verify(user, viper.GetStringSlice("required_fields.update"))
 	if err != nil {
 		return nil, err
 	}

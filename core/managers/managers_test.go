@@ -95,3 +95,21 @@ func TestUpdate(t *testing.T) {
 		t.Fatal("should be equal once updated")
 	}
 }
+
+func TestSetField(t *testing.T) {
+	u := &models.User{}
+
+	field1 := "Datejoined"
+	field2 := "Password"
+	value := "12345678"
+
+	err := SetField(u, field1, value)
+	if err == nil {
+		t.Fatal("Ops should give an error!")
+	}
+	err = SetField(u, field2, value)
+	if err != nil {
+		t.Fatal("Ops should not return this:", err)
+	}
+
+}
