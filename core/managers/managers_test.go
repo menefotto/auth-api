@@ -90,7 +90,7 @@ func TestUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(mapped)
+	//t.Log(mapped)
 	if u2.Username == "" {
 		t.Fatal("should be equal once updated")
 	}
