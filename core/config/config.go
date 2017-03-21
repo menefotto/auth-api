@@ -17,7 +17,7 @@ func init() {
 	viper.AddConfigPath(path)
 	viper.SetConfigName("config")
 
-	viper.SetDefault("required_user_fields.obfuscated",
+	viper.SetDefault("required_fields.obfuscated",
 		map[string]string{"Password": "-", "Uuid": "-", "Datajoined": "-"})
 
 	err := viper.ReadInConfig()

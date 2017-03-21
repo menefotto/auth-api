@@ -1,6 +1,4 @@
-Password has to go stateless as well since it's not now.
+- Use another autoexpiring blacklist when password reset.
+- Move it to use confparse and get rid of viper.
 
-Can't be stateless I have to add a revocked token database, ideally low latency,
-either redis or google datastore ( slower but free ).
 
-Use another autoexpiring blacklist when password reset.
