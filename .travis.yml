@@ -5,7 +5,7 @@ go:
 before_install:
   - go get github.com/mattn/goveralls
 script:
-  - exec go build -tags amazon
-  - exec go build -tags google
+  - go build -tags amazon &&
+  - go build -tags google &&
   - $HOME/gopath/bin/goveralls -service=travis-ci
 
