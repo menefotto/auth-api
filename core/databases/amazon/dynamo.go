@@ -22,7 +22,7 @@ func (d *Dynamo) Open(kind, region string) error {
 	d.kind = kind
 	d.db = dynamo.New(
 		session.New(),
-		&aws.Config{Region: aws.String(region)},
+		&aws.Config{Region: aws.String("eu-central-1")},
 	)
 	if d.db == nil {
 		return errors.DynamoInit

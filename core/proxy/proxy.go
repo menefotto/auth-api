@@ -1,8 +1,6 @@
 package proxy
 
 import (
-	"log"
-
 	"github.com/wind85/auth-api/core/config"
 	"github.com/wind85/auth-api/core/errors"
 	"github.com/wind85/auth-api/core/managers"
@@ -14,13 +12,7 @@ type Users struct {
 }
 
 func New() *Users {
-	backend, err := config.Ini.GetString("database.backend")
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-
-	return &Users{managers.New("Users", backend)}
+	return &Users{managers.New("Users", "")}
 }
 
 func (j *Users) Create(user *models.User) (*models.User, error) {
