@@ -2,9 +2,15 @@ language: go
 
 go:
   - 1.8
+
 before_install:
   - go get github.com/mattn/goveralls
-script:
-  - bundle exec go build -tags amazon && exec go build -tags google
-  - bundle $HOME/gopath/bin/goveralls -service=travis-ci
 
+before_script:
+  ./pre_build.sh
+
+script:
+  ./build.sh
+
+after_script:
+  ./post_build.sh
