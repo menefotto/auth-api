@@ -11,6 +11,3 @@ before_script:
 
 script:
   ./build.sh
-
-after_script:
-  ./post_build.sh
