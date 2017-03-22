@@ -4,25 +4,23 @@ import (
 	"log"
 	"os"
 
-	"github.com/spf13/viper"
+	"github.com/wind85/confparse"
 )
 
+var Ini *confparse.IniParser
+
 func init() {
-	var path string
+	var (
+		path string
+		err  error
+	)
 
 	if path = os.Getenv("AUTH_API_CONF"); path == "" {
-		path = "/home/wind85/Documents/go/src/github.com/auth-api/"
+		path = "/home/wind85/Documents/go/src/github.com/wind85/auth-api/"
 	}
 
-	viper.AddConfigPath(path)
-	viper.SetConfigName("config")
-
-	viper.SetDefault("required_fields.obfuscated",
-		map[string]string{"Password": "-", "Uuid": "-", "Datajoined": "-"})
-
-	err := viper.ReadInConfig()
+	Ini, err = confparse.New("../../config.toml")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Fatal error: ", err)
 	}
-
 }

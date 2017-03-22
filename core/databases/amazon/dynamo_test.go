@@ -3,7 +3,7 @@ package amazon
 import (
 	"testing"
 
-	"github.com/auth-api/core/models"
+	"github.com/wind85/auth-api/core/models"
 )
 
 func TestPut(t *testing.T) {

@@ -15,11 +15,11 @@ import (
 	throttled "gopkg.in/throttled/throttled.v2"
 	"gopkg.in/throttled/throttled.v2/store/memstore"
 
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/tokens"
-	"github.com/auth-api/core/views"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/models"
+	"github.com/wind85/auth-api/core/tokens"
+	"github.com/wind85/auth-api/core/views"
 )
 
 func NewRateLimiter() func(h http.Handler) http.Handler {
@@ -28,11 +28,17 @@ func NewRateLimiter() func(h http.Handler) http.Handler {
 		panic(err)
 	}
 
-	quota := throttled.RateQuota{
-		throttled.PerMin(viper.GetInt("rate_limits.request")),
-		viper.GetInt("rate_limits.burst"),
+	reqs, err := config.Ini.GetInt("rate_limits.request")
+	if err != nil {
+		panic(err)
 	}
 
+	burst, err := config.Ini.GetInt("rate_limits.burst")
+	if err != nil {
+		panic(err)
+	}
+
+	quota := throttled.RateQuota{throttled.PerMin(int(reqs)), int(burst)}
 	rateLimiter, err := throttled.NewGCRARateLimiter(store, quota)
 	if err != nil {
 		panic(err)
@@ -87,8 +93,19 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		if !xsrftoken.Valid(crsf, viper.GetString("crypto.secret"),
-			claims, viper.GetString("crypto.crsf_action_id")) {
+		secret, err := config.Ini.GetString("crypto.secret")
+		if err != nil {
+			errors.Http(w, errors.ConfigFault, http.StatusUnauthorized)
+			return
+		}
+
+		crsf_id, err := config.Ini.GetString("crypto.crsf_action_id")
+		if err != nil {
+			errors.Http(w, errors.ConfigFault, http.StatusUnauthorized)
+			return
+		}
+
+		if !xsrftoken.Valid(crsf, secret, claims, crsf_id) {
 			errors.Http(w, errors.DontMatch, http.StatusUnauthorized)
 			return
 		}
@@ -124,9 +141,14 @@ func AddContext(next http.Handler) http.Handler {
 }
 
 func TimeOut(next http.Handler) http.Handler {
+	duration, err := config.Ini.GetDuration("rate_limits.time_out")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return http.TimeoutHandler(
 		next,
-		viper.GetDuration("rate_limits.time_out")*time.Second,
+		duration*time.Second,
 		string(errors.Json(errors.TimeOutReq)),
 	)
 }

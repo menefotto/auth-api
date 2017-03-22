@@ -3,10 +3,10 @@ package views
 import (
 	"net/http"
 
-	"github.com/auth-api/core/cookies"
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/services"
-	"github.com/auth-api/core/utils"
+	"github.com/wind85/auth-api/core/cookies"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/services"
+	"github.com/wind85/auth-api/core/utils"
 	"github.com/gorilla/mux"
 )
 

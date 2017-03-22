@@ -3,21 +3,24 @@ package managers
 import (
 	"testing"
 
-	_ "github.com/auth-api/core/config"
-	"github.com/auth-api/core/models"
-	"github.com/spf13/viper"
+	_ "github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/models"
 )
 
 var manager = New("Users", "DATASTORE")
 
 func TestVerify(t *testing.T) {
+	create_fields, err := config.Ini.GetSlice("required_fields.create")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	u := &models.User{
 		Username: "wind85",
 		Password: "1234",
 		Email:    "carlo@email.com",
 	}
-	if err := manager.Verify(u, viper.GetStringSlice("required_user_fields.create")); err != nil {
+	if err := manager.Verify(u, create_fields); err != nil {
 		t.Fatal(err)
 	}
 
@@ -26,7 +29,7 @@ func TestVerify(t *testing.T) {
 		Email:    "carlo@email.com",
 	}
 
-	if err := manager.Verify(u2, viper.GetStringSlice("required_fields.create")); err == nil {
+	if err := manager.Verify(u2, create_fields); err == nil {
 		t.Fatal("should not pass verification")
 	}
 
@@ -36,7 +39,12 @@ func TestVerify(t *testing.T) {
 		Email:    "carlo@email.com",
 	}
 
-	err := manager.Verify(u3, viper.GetStringSlice("required_fields.update"))
+	update_fields, err := config.Ini.GetSlice("required_fields.update")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err := manager.Verify(u3, update_fields)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +53,7 @@ func TestVerify(t *testing.T) {
 		Username: "wind85",
 	}
 
-	if err := manager.Verify(u4, viper.GetStringSlice("required_fields.update")); err == nil {
+	if err := manager.Verify(u4, update_fields); err == nil {
 		t.Fatal("should not pass verification")
 	}
 }

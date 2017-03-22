@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 
 	"cloud.google.com/go/datastore"
-	"github.com/auth-api/core/models"
+	"github.com/wind85/auth-api/core/models"
 )
 
 const version = 0.1

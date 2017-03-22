@@ -8,15 +8,25 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/auth-api/core/errors"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func Encrypt(data string) (string, error) {
-	nonce, _ := hex.DecodeString(viper.GetString("crypto.nonce"))
+	confnonce, err := config.Ini.GetString("crypto.nonce")
+	if err != nil {
+		return "", err
+	}
 
-	block, err := aes.NewCipher([]byte(viper.GetString("crypto.secret")))
+	nonce, _ := hex.DecodeString(confnonce)
+
+	secret, err := config.Ini.GetString("crypto.secret")
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
 		return "", errors.NewCipher
 	}
@@ -30,10 +40,20 @@ func Encrypt(data string) (string, error) {
 }
 
 func Decrypt(data string) (string, error) {
-	nonce, _ := hex.DecodeString(viper.GetString("crypto.nonce"))
+	confnonce, err := config.Ini.GetString("crypto.nonce")
+	if err != nil {
+		return "", err
+	}
+
+	nonce, _ := hex.DecodeString(confnonce)
 	text, _ := hex.DecodeString(data)
 
-	block, err := aes.NewCipher([]byte(viper.GetString("crypto.secret")))
+	secret, err := config.Ini.GetString("crypto.secret")
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
 		return "", errors.NewCipher
 	}

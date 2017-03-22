@@ -9,13 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/auth-api/core/config"
-	"github.com/auth-api/core/middleware"
-	"github.com/auth-api/core/views"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/middleware"
+	"github.com/wind85/auth-api/core/views"
 )
 
 func main() {

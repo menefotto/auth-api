@@ -6,12 +6,12 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/proxy"
-	"github.com/auth-api/core/tokens"
-	"github.com/auth-api/core/utils"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/models"
+	"github.com/wind85/auth-api/core/proxy"
+	"github.com/wind85/auth-api/core/tokens"
+	"github.com/wind85/auth-api/core/utils"
 )
 
 type Users struct {
@@ -44,10 +44,12 @@ func (u *Users) Login(email, password string) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	return tokens.GenerateJwt(
-		[]byte(user.Email),
-		viper.GetInt("jwt_delta.delta"),
-	), csrf, nil
+	jwt_delta, err := config.Ini.GetInt("jwt_delta.delta")
+	if err != nil {
+		return "", nil, err
+	}
+
+	return tokens.GenerateJwt([]byte(user.Email), int(jwt_delta)), csrf, nil
 }
 
 func (u *Users) Register(data *models.User) error {
@@ -152,12 +154,16 @@ func (u *Users) ActivationConfirm(data []byte) error {
 }
 
 func (u *Users) PasswordReset(data *models.User) error {
+	jwt_delta, err := config.Ini.GetInt("jwt_delta.delta")
+	if err != nil {
+		return err
+	}
 
-	code := tokens.GenerateJwt(nil, viper.GetInt("jwt_delta.password"))
+	code := tokens.GenerateJwt(nil, int(jwt_delta))
 
 	//u.cache.Put(code, data)
 
-	err := u.sendConfirmEmail(
+	err = u.sendConfirmEmail(
 		data.Email,
 		"Password Reset Link",
 		"password_reset",

@@ -3,7 +3,7 @@ package cookies
 import (
 	"net/http"
 
-	"github.com/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/errors"
 	"github.com/gorilla/securecookie"
 )
 

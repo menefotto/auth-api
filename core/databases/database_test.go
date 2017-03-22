@@ -3,8 +3,8 @@ package databases
 import (
 	"testing"
 
-	"github.com/auth-api/core/databases/amazon"
-	"github.com/auth-api/core/databases/google"
+	"github.com/wind85/auth-api/core/databases/amazon"
+	"github.com/wind85/auth-api/core/databases/google"
 )
 
 func TestDynamoSatisfyInterface(t *testing.T) {

@@ -1,6 +1,6 @@
 package databases
 
-import "github.com/auth-api/core/models"
+import "github.com/wind85/auth-api/core/models"
 
 // Db interface implemented by clients
 type Db interface {

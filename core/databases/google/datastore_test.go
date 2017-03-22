@@ -3,7 +3,7 @@ package google
 import (
 	"testing"
 
-	"github.com/auth-api/core/models"
+	"github.com/wind85/auth-api/core/models"
 )
 
 // IMPORTANT datastore need the emulator to be running in order to run

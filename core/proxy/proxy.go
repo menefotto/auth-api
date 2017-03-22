@@ -1,10 +1,12 @@
 package proxy
 
 import (
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/managers"
-	"github.com/auth-api/core/models"
-	"github.com/spf13/viper"
+	"log"
+
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/managers"
+	"github.com/wind85/auth-api/core/models"
 )
 
 type Users struct {
@@ -12,16 +14,22 @@ type Users struct {
 }
 
 func New() *Users {
-	return &Users{
-		managers.New(
-			"Users",
-			viper.GetString("database.backend"),
-		),
+	backend, err := config.Ini.GetString("database.backend")
+	if err != nil {
+		log.Println(err)
+		return nil
 	}
+
+	return &Users{managers.New("Users", backend)}
 }
 
 func (j *Users) Create(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, viper.GetStringSlice("required_fields.create"))
+	fields, err := config.Ini.GetSlice("required_fields.create")
+	if err != nil {
+		return nil, err
+	}
+
+	err = j.mng.Verify(user, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +56,12 @@ func (j *Users) Get(user *models.User) (*models.User, error) {
 }
 
 func (j *Users) Update(user *models.User) (*models.User, error) {
-	err := j.mng.Verify(user, viper.GetStringSlice("required_fields.update"))
+	fields, err := config.Ini.GetSlice("required_fields.create")
+	if err != nil {
+		return nil, err
+	}
+
+	err = j.mng.Verify(user, fields)
 	if err != nil {
 		return nil, err
 	}

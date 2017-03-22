@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	_ "github.com/auth-api/core/config"
+	_ "github.com/wind85/auth-api/core/config"
 )
 
 var enc string

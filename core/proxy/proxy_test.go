@@ -3,9 +3,9 @@ package proxy
 import (
 	"testing"
 
-	_ "github.com/auth-api/core/config"
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
+	_ "github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/models"
 )
 
 func TestApiError(t *testing.T) {

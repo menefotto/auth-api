@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/auth-api/core/cookies"
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/managers"
-	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/tokens"
-	"github.com/auth-api/core/utils"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/cookies"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/managers"
+	"github.com/wind85/auth-api/core/models"
+	"github.com/wind85/auth-api/core/tokens"
+	"github.com/wind85/auth-api/core/utils"
 )
 
 func GetRequestData(w http.ResponseWriter, r *http.Request) (*models.User, string, string) {
@@ -43,8 +43,13 @@ func GetClaimsAndJwt(w http.ResponseWriter, r *http.Request) (string, string) {
 }
 
 func Serialize(user *models.User) []byte {
-	for field, value := range viper.GetStringMapString("required_user_fields.obfuscated") {
-		err := managers.SetField(user, field, value)
+	fields, err := config.Ini.GetSlice("required_fields.obfuscated")
+	if err != nil {
+		return nil
+	}
+
+	for _, field := range fields {
+		err := managers.SetField(user, field, "")
 		if err != nil {
 			return nil
 		}

@@ -9,10 +9,10 @@ import (
 
 	"cloud.google.com/go/datastore"
 
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/utils"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/utils"
 	"golang.org/x/net/xsrftoken"
 )
 
@@ -187,11 +187,17 @@ type CrsfToken struct {
 }
 
 func GenerateCrsf(email string) ([]byte, error) {
-	payload := xsrftoken.Generate(
-		viper.GetString("crypto.secret"),
-		email,
-		viper.GetString("crypto.crsf_action_id"),
-	)
+	secret, err := config.Ini.GetString("crypto.secret")
+	if err != nil {
+		return nil, err
+	}
+
+	crsf_id, err := config.Ini.GetString("crypto.crsf_action_id")
+	if err != nil {
+		return nil, err
+	}
+
+	payload := xsrftoken.Generate(secret, email, crsf_id)
 	csrf, err := json.Marshal(&CrsfToken{payload})
 	if err != nil {
 		return nil, err

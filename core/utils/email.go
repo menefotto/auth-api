@@ -7,7 +7,7 @@ import (
 	"net/smtp"
 	"path/filepath"
 
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
 )
 
 type Email struct {
@@ -16,26 +16,32 @@ type Email struct {
 }
 
 func SendEmail(sendto []string, msg *Email, templname string) error {
-	auth := smtp.PlainAuth(
-		"",
-		viper.GetString("email.sender"),
-		viper.GetString("email.password"),
-		viper.GetString("smtp"),
-	)
-
-	body, err := RenderEmail(msg, templname, viper.GetString("email.sender"), sendto)
+	sender, err := config.Ini.GetString("email.sender")
+	if err != nil {
+		return err
+	}
+	pass, err := config.Ini.GetString("email.password")
 	if err != nil {
 		return err
 	}
 
-	err = smtp.SendMail(
-		viper.GetString("email.smtp")+viper.GetString("email.port"),
-		auth,
-		viper.GetString("email.sender"),
-		sendto,
-		body,
-	)
+	esmtp, err := config.Ini.GetString("email.smtp")
+	if err != nil {
+		return err
+	}
 
+	port, err := config.Ini.GetString("email.port")
+	if err != nil {
+		return err
+	}
+
+	auth := smtp.PlainAuth("", sender, pass, esmtp)
+	body, err := RenderEmail(msg, templname, sender, sendto)
+	if err != nil {
+		return err
+	}
+
+	err = smtp.SendMail(esmtp+port, auth, sender, sendto, body)
 	if err != nil {
 		return errors.New(err.Error())
 	}
@@ -48,13 +54,18 @@ func RenderEmail(msg *Email, templname, from string, sendto []string) ([]byte, e
 	send := "From: " + from + "\r\n"
 	recv := "To: " + sendto[0] + "\r\n"
 	mime := "MIME-version: 1.0\r\nContent-Type: text/html\r\n"
-	subj := "Subject: " + viper.GetString("project.id") + ": " + msg.Title + "\r\n\r\n"
+	subj := "Subject: " + msg.Title + "\r\n\r\n"
 
-	path := filepath.Join(viper.GetString("email.template_dir"), templname+".tmpl")
+	tpath, err := config.Ini.GetString("email.template_dir")
+	if err != nil {
+		return nil, err
+	}
+
+	path := filepath.Join(tpath, templname+".tmpl")
 	tmpl := template.Must(template.ParseFiles(path))
 
 	buff := &bytes.Buffer{}
-	err := tmpl.Execute(buff, msg)
+	err = tmpl.Execute(buff, msg)
 	if err != nil {
 		return nil, err
 	}

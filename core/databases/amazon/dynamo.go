@@ -3,11 +3,11 @@ package amazon
 import (
 	"fmt"
 
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/models"
 )
 
 const version = 0.1

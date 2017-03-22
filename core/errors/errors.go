@@ -31,6 +31,7 @@ var EmailMissing = New("Email is required")
 var PanicInternalError = New("Panic Internal Sever error!")
 var PasswordTooShort = New("Password should be at least 8 characters")
 var DynamoInit = New("Failed to initilize dynamo")
+var ConfigFault = New("Failed configuration faiulure!")
 
 func New(msg string) *ApiError {
 	return &ApiError{msg}

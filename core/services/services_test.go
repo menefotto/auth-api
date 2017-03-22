@@ -3,8 +3,8 @@ package services
 import (
 	"testing"
 
-	_ "github.com/auth-api/core/config"
-	"github.com/auth-api/core/models"
+	_ "github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/models"
 )
 
 func TestLogin(t *testing.T) {

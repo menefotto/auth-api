@@ -8,14 +8,14 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/auth-api/core/databases"
-	"github.com/auth-api/core/databases/amazon"
-	"github.com/auth-api/core/databases/google"
-	"github.com/auth-api/core/errors"
-	"github.com/auth-api/core/models"
-	"github.com/auth-api/core/tokens"
 	"github.com/pborman/uuid"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
+	"github.com/wind85/auth-api/core/databases"
+	"github.com/wind85/auth-api/core/databases/amazon"
+	"github.com/wind85/auth-api/core/databases/google"
+	"github.com/wind85/auth-api/core/errors"
+	"github.com/wind85/auth-api/core/models"
+	"github.com/wind85/auth-api/core/tokens"
 )
 
 type Users struct {
@@ -50,16 +50,18 @@ func (u *Users) Create(user *models.User) (*models.User, error) {
 		return nil, err
 	}
 
+	jwt_delta, err := config.Ini.GetInt("jwt_delta.activation")
+	if err != nil {
+		return nil, err
+	}
+
 	user.Password = string(hash)
 	user.Uuid = uuid.New()
 	user.Isactive = "false"
 	user.Isstaff = "false"
 	user.Issuperuser = "false"
 	user.Datejoined = fmt.Sprint(time.Now().UTC())
-	user.Code = tokens.GenerateJwt(
-		[]byte(user.Email),
-		viper.GetInt("jwt_delta.activation"),
-	)
+	user.Code = tokens.GenerateJwt([]byte(user.Email), int(jwt_delta))
 
 	if err := u.store.Put(user.Email, user); err != nil {
 		return nil, err
