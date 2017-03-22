@@ -20,6 +20,7 @@ func SendEmail(sendto []string, msg *Email, templname string) error {
 	if err != nil {
 		return err
 	}
+
 	pass, err := config.Ini.GetString("email.password")
 	if err != nil {
 		return err
