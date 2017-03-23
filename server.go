@@ -12,7 +12,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
-	"github.com/spf13/viper"
+	"github.com/wind85/auth-api/core/config"
 	"github.com/wind85/auth-api/core/middleware"
 	"github.com/wind85/auth-api/core/views"
 )
@@ -35,8 +35,13 @@ func main() {
 	private_post_empty := base.Append(middleware.AddContext,
 		middleware.Auth, middleware.Recover)
 
+	prefix, err := config.Ini.GetString("api.prefix")
+	if err != nil {
+		log.Fatal("Fatal: ", err)
+	}
+
 	r := mux.NewRouter()
-	p := r.PathPrefix(viper.GetString("api.prefix")).Subrouter()
+	p := r.PathPrefix(prefix).Subrouter()
 
 	p.Handle("/login",
 		pubblic_post.ThenFunc(views.Login)).
@@ -74,8 +79,13 @@ func main() {
 		pubblic_get.ThenFunc(views.PasswordResetConfirm)).
 		Methods("GET").Name("password_reset_confirm")
 
+	port, err := config.Ini.GetString("host.port")
+	if err != nil {
+		log.Fatal("Fatal: ", err)
+	}
+
 	s := &http.Server{
-		Addr:           viper.GetString("host.port"),
+		Addr:           port,
 		Handler:        r,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -85,8 +95,8 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
+	config.Ini.Watch()
+	config.Ini.OnConfChange(func(e fsnotify.Event) {
 		if e.Op.String() == "WRITE" {
 			ShutdownOrReload(s, "Reloading, server conf changed!", main)
 		}

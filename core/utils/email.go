@@ -9,7 +9,6 @@ import (
 
 	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 
-	"github.com/spf13/viper"
 	"github.com/wind85/auth-api/core/config"
 )
 
@@ -19,23 +18,33 @@ type Email struct {
 }
 
 func SendEmailGun(sendto string, msg *Email, templname string) error {
-	mg := mailgun.NewMailgun(
-		viper.GetString("mailgun.domain"),
-		viper.GetString("mailgun.apikey"),
-		viper.GetString("mailgin.apipub"),
-	)
+	sender, err := config.Ini.GetString("mailgun.sender")
+	if err != nil {
+		return err
+	}
 
+	domain, err := config.Ini.GetString("mailgun.domain")
+	if err != nil {
+		return err
+	}
+
+	apikey, err := config.Ini.GetString("mailgun.apikey")
+	if err != nil {
+		return err
+	}
+
+	apipub, err := config.Ini.GetString("mailgun.apipub")
+	if err != nil {
+		return err
+	}
+
+	mg := mailgun.NewMailgun(domain, apikey, apipub)
 	body, err := RenderEmailTempl(msg, templname)
 	if err != nil {
 		return err
 	}
 
-	message := mailgun.NewMessage(
-		viper.GetString("mailgun.sender"),
-		msg.Title,
-		body,
-		sendto,
-	)
+	message := mailgun.NewMessage(sender, msg.Title, body, sendto)
 	message.AddHeader("Content-Type", "text/html")
 	message.AddHeader("MIME-version", "1.0")
 	message.SetHtml(body)

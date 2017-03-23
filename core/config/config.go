@@ -19,7 +19,7 @@ func init() {
 		path = "/home/wind85/Documents/go/src/github.com/wind85/auth-api/"
 	}
 
-	Ini, err = confparse.New("../../config.toml")
+	Ini, err = confparse.New("config.toml")
 	if err != nil {
 		log.Fatal("Fatal error: ", err)
 	}
