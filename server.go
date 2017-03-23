@@ -85,7 +85,7 @@ func main() {
 	}
 
 	s := &http.Server{
-		Addr:           port,
+		Addr:           ":" + port,
 		Handler:        r,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -95,7 +95,12 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
-	config.Ini.Watch()
+	go func() {
+		if err := config.Ini.Watch(); err != nil {
+			log.Println("Ops: ", err)
+		}
+	}()
+
 	config.Ini.OnConfChange(func(e fsnotify.Event) {
 		if e.Op.String() == "WRITE" {
 			ShutdownOrReload(s, "Reloading, server conf changed!", main)

@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/wind85/confparse"
 )
@@ -10,16 +11,10 @@ import (
 var Ini *confparse.IniParser
 
 func init() {
-	var (
-		path string
-		err  error
-	)
+	var err error
 
-	if path = os.Getenv("AUTH_API_CONF"); path == "" {
-		path = "/home/wind85/Documents/go/src/github.com/wind85/auth-api/"
-	}
-
-	Ini, err = confparse.New("config.toml")
+	path := os.Getenv("AUTH_API_CONF")
+	Ini, err = confparse.New(filepath.Join(path, "config.toml"))
 	if err != nil {
 		log.Fatal("Fatal error: ", err)
 	}
