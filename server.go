@@ -79,6 +79,8 @@ func main() {
 		pubblic_get.ThenFunc(views.PasswordResetConfirm)).
 		Methods("GET").Name("password_reset_confirm")
 
+	p.HandleFunc("/check", HealthCheck).Methods("GET")
+
 	port, err := config.Ini.GetString("host.port")
 	if err != nil {
 		log.Fatal("Fatal: ", err)
@@ -133,4 +135,9 @@ func ShutdownOrReload(srv *http.Server, msg string, fn func()) {
 	log.Println(msg)
 
 	fn()
+}
+
+func HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Health Ok!"))
+	w.WriteHeader(http.StatusOK)
 }
