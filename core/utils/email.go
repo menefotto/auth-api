@@ -86,14 +86,14 @@ func SendEmail(sendto []string, msg *Email, templname string) error {
 func RenderEmailTempl(msg *Email, templname string) (string, error) {
 	tpath, err := config.Ini.GetString("email.template_dir")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	path := filepath.Join("../../"+tpath, templname+".tmpl")
 	tmpl := template.Must(template.ParseFiles(path))
 
 	buff := &bytes.Buffer{}
-	err := tmpl.Execute(buff, msg)
+	err = tmpl.Execute(buff, msg)
 	if err != nil {
 		return "", err
 	}
