@@ -14,7 +14,7 @@ func init() {
 	var err error
 
 	path := os.Getenv("AUTH_API_CONF")
-	Ini, err = confparse.New(filepath.Join(path, "config.toml"))
+	Ini, err = confparse.New(filepath.Join(path, "api.conf"))
 	if err != nil {
 		log.Fatal("Fatal error: ", err)
 	}

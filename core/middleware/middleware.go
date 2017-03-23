@@ -148,7 +148,7 @@ func TimeOut(next http.Handler) http.Handler {
 
 	return http.TimeoutHandler(
 		next,
-		duration*time.Second,
+		duration,
 		string(errors.Json(errors.TimeOutReq)),
 	)
 }
